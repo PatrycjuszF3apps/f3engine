@@ -8,15 +8,15 @@
 
 ```text
 f3engine/
-├── engine/                 # Core 2D engine (completely agnostic of games and debug bar DOM)
+├── engine/                 # Core 2D engine (versioned via version.ts; agnostic of games & debug bar DOM)
 ├── degub_bar/              # Standalone HTML Debug Bar consuming EngineDebugHooks
 ├── demos/
 │   ├── games/
-│   │   ├── snake/          # Demo 1: Classic 20×20 Arcade Snake
-│   │   └── snake2/         # Demo 2: Snake 2: Arena (obstacle pillars & dual targets)
+│   │   ├── snake/          # Demo 1: Classic 20×20 Arcade Snake (+ manifest.json)
+│   │   └── snake2/         # Demo 2: Snake 2: Arena (obstacle pillars, dual targets + manifest.json)
 │   └── html5_launcher/     # HTML5 wrapper app initializing the canvas, debug bar, and demo switcher
 └── docs/
-    ├── ARCHITECTURE.md     # Multi-bundle architecture & hook contracts
+    ├── ARCHITECTURE.md     # Multi-bundle architecture, versioning & hook contracts
     ├── GDD.md              # Game Design Document for the Snake demos
     └── ROADMAP.md          # Project roadmap and upcoming features
 ```
@@ -26,6 +26,7 @@ f3engine/
 ## Key Architectural Highlights
 
 1. **Core Engine (`engine/`)**:
+   - `ENGINE_VERSION` & `AppManifest` (`version.ts`) – Semantic engine versioning (`1.0.0`) and application manifest contract (`isEngineVersionCompatible`, `checkEngineVersion`). Every game built on `f3engine` supplies an `AppManifest` (`manifest.json`) declaring the engine version it targets.
    - `VirtualViewport` – Manages an independent virtual pixel grid (`virtualWidth × virtualHeight`), aspect ratio presets (`4:3-portrait`, `4:3-horizontal`, `16:9-portrait`, `16:9-horizontal`, `custom`), physical stage scaling, and virtual pointer coordinate mapping. Exposes `getDebugHooks(): EngineDebugHooks` without any awareness of external debug bar HTML.
    - `ColorPalette` & `VirtualFramebuffer` – Indexed framebuffer (`Uint8Array`) guaranteeing that every virtual pixel on screen strictly belongs to the declared palette.
    - `IRendererBackend` (`Canvas2DRendererBackend` / `WebGLRendererBackend`) – Swappable physical rendering layer allowing instant runtime switching between Canvas 2D (`ImageData`) and WebGL (`LUMINANCE` + `256×1 RGBA` LUT shader).
@@ -35,7 +36,7 @@ f3engine/
 
 2. **Decoupled Debug Bar (`degub_bar/`)**:
    - Renders an HTML inspector bar that binds to the engine solely through `EngineDebugHooks`.
-   - Allows live inspection and overrides of grid aspect ratio, virtual resolution (`240w`, `300w`, `360w`, `480w`, or custom `W×H`), window scale percentage, UI/font scale multiplier, active renderer backend (`Canvas 2D` / `WebGL`), palette swatches, and virtual cursor `(X, Y)` coordinates.
+   - Displays live **Engine Version vs. App Manifest Engine Version** compatibility status (`Engine v1.0.0 vs Manifest v1.0.0 (OK)`), and allows live inspection and overrides of grid aspect ratio, virtual resolution (`240w`, `300w`, `360w`, `480w`, or custom `W×H`), window scale percentage, UI/font scale multiplier, active renderer backend (`Canvas 2D` / `WebGL`), palette swatches, and virtual cursor `(X, Y)` coordinates.
 
 3. **HTML5 Demo Launcher (`demos/html5_launcher/`)**:
    - Initializes the host stage, mounts the selected demo game from `DEMO_CATALOG`, and connects `DebugToolbar`.

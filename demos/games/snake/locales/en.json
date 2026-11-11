@@ -76,5 +76,9 @@
   "debug.cursor_outside": "X:-- Y:--",
   "debug.reset": "Reset Grid",
   "debug.physical_info": "Grid: {vw}×{vh} vpx | Screen: {pw}×{ph} px",
+  "debug.version_info": "Engine v{engine} vs Manifest v{manifest} ({status})",
+  "debug.version_compatible": "OK",
+  "debug.version_mismatch": "MISMATCH",
+  "debug.version_tooltip": "App: {app} v{appVersion} | Engine Runtime: v{engine} | Manifest Target: v{manifest}",
   "error.canvas_2d_context": "Could not acquire 2D context for canvas element."
 }

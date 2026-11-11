@@ -1,4 +1,5 @@
 import {
+  AppManifest,
   EngineDebugHooks,
   GamepadAction,
   GamepadDirection,
@@ -13,6 +14,7 @@ import {
   VirtualUIDecorator,
   VirtualViewport,
 } from '../../../engine';
+import manifestData from './manifest.json';
 import {
   DEFAULT_SNAKE_STATE,
   Difficulty,
@@ -23,6 +25,8 @@ import {
 import { Direction, GameStats, SnakeGame } from './SnakeGame';
 import { SnakeHUDRenderer } from './SnakeHUDRenderer';
 import { StringId, SupportedLocale, createGameI18n } from './i18n';
+
+export const SNAKE_MANIFEST: AppManifest = manifestData;
 
 const STORAGE_KEY = 'f3engine_snake_settings_v1';
 
@@ -47,6 +51,7 @@ const DIRECTION_TO_KEYCODE: Record<Direction, string> = {
 export interface DemoSession {
   readonly id: string;
   readonly name: string;
+  readonly manifest: AppManifest;
   readonly hooks: EngineDebugHooks;
   readonly i18n: I18nManager<SupportedLocale, StringId>;
   dispose(): void;
@@ -67,6 +72,7 @@ export function mountSnakeDemo(container: HTMLElement): DemoSession {
 
   const viewport = new VirtualViewport({
     container,
+    manifest: SNAKE_MANIFEST,
     virtualWidth: SNAKE_VIEWPORT_DEFAULTS.virtualWidth,
     aspectRatio: SNAKE_VIEWPORT_DEFAULTS.aspectRatio,
     windowScalePercent: SNAKE_VIEWPORT_DEFAULTS.windowScalePercent,
@@ -527,8 +533,9 @@ export function mountSnakeDemo(container: HTMLElement): DemoSession {
   window.addEventListener('keydown', handleKeyDown);
 
   return {
-    id: 'snake',
-    name: 'Snake (Classic)',
+    id: SNAKE_MANIFEST.id,
+    name: SNAKE_MANIFEST.name,
+    manifest: SNAKE_MANIFEST,
     hooks: viewport.getDebugHooks(),
     i18n,
     dispose: () => {

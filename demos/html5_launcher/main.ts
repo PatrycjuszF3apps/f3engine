@@ -68,6 +68,10 @@ function launchDemo(demoId: string): void {
         cursorOutside: 'debug.cursor_outside',
         reset: 'debug.reset',
         physicalInfo: 'debug.physical_info',
+        versionInfo: 'debug.version_info',
+        versionCompatible: 'debug.version_compatible',
+        versionMismatch: 'debug.version_mismatch',
+        versionTooltip: 'debug.version_tooltip',
       },
     });
   } else {

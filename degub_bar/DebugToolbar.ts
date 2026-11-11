@@ -10,6 +10,10 @@ export interface DebugToolbarLabels {
   title: string;
   demoSelect?: string;
   demoReset?: string;
+  versionInfo?: string;
+  versionCompatible?: string;
+  versionMismatch?: string;
+  versionTooltip?: string;
   aspectRatio: string;
   aspect43Portrait: string;
   aspect43Horizontal: string;
@@ -83,6 +87,7 @@ export class DebugToolbar<
   private rendererSelect!: HTMLSelectElement;
   private cursorInspectCheckbox!: HTMLInputElement;
   private cursorCoordsEl!: HTMLElement;
+  private versionInfoEl!: HTMLElement;
   private physicalInfoEl!: HTMLElement;
   private paletteSwatchesEl!: HTMLElement;
 
@@ -184,6 +189,7 @@ export class DebugToolbar<
         <div class="debug-brand">
           <span class="debug-led"></span>
           <span class="debug-title">${this.t('title')}</span>
+          <span id="debug-version-info" class="debug-readout debug-version-readout"></span>
           <span id="debug-physical-info" class="debug-readout"></span>
         </div>
 
@@ -343,6 +349,9 @@ export class DebugToolbar<
     this.cursorCoordsEl = this.container.querySelector<HTMLElement>(
       '#debug-cursor-coords'
     )!;
+    this.versionInfoEl = this.container.querySelector<HTMLElement>(
+      '#debug-version-info'
+    )!;
     this.physicalInfoEl = this.container.querySelector<HTMLElement>(
       '#debug-physical-info'
     )!;
@@ -462,6 +471,31 @@ export class DebugToolbar<
           y: state.cursorPosition.vy,
         })
       : this.t('cursorOutside');
+
+    const statusLabel = state.versionCheck.compatible
+      ? this.t('versionCompatible')
+      : this.t('versionMismatch');
+    this.versionInfoEl.textContent = this.t('versionInfo', {
+      engine: state.versionCheck.engineVersion,
+      manifest: state.versionCheck.manifestEngineVersion,
+      status: statusLabel,
+    });
+    this.versionInfoEl.classList.toggle(
+      'compatible',
+      state.versionCheck.compatible
+    );
+    this.versionInfoEl.classList.toggle(
+      'mismatch',
+      !state.versionCheck.compatible
+    );
+    if (this.labelKeys.versionTooltip) {
+      this.versionInfoEl.title = this.t('versionTooltip', {
+        app: state.appManifest?.name ?? 'Unknown',
+        appVersion: state.appManifest?.version ?? 'n/a',
+        engine: state.versionCheck.engineVersion,
+        manifest: state.versionCheck.manifestEngineVersion,
+      });
+    }
 
     this.physicalInfoEl.textContent = this.t('physicalInfo', {
       vw: state.virtualWidth,

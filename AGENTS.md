@@ -15,12 +15,12 @@ The repository is structured into four strictly separated layers bundled into de
 
 2. **`degub_bar/` (`dist/assets/debug-bar-*.js`)** – Standalone HTML Debug Bar:
    - Communicates with the engine exclusively through the `EngineDebugHooks` interface exported by `engine/`.
-   - Provides live controls for aspect ratio, virtual grid dimensions, window scale, UI scale, renderer backend (`Canvas 2D` / `WebGL`), palette inspection, virtual cursor coordinates, and demo switching/resetting.
+   - Displays live Engine version vs. Application Manifest target Engine version (`state.versionCheck`) and provides live controls for aspect ratio, virtual grid dimensions, window scale, UI scale, renderer backend (`Canvas 2D` / `WebGL`), palette inspection, virtual cursor coordinates, and demo switching/resetting.
 
 3. **`demos/games/` (`dist/assets/demos-games-*.js`)** – Playable Demo Games:
-   - `demos/games/snake/` – Classic 20×20 Snake demo.
-   - `demos/games/snake2/` – Snake 2: Arena demo with obstacle pillars and dual targets.
-   - Each demo exports a mount function returning a `DemoSession` (`id`, `name`, `hooks`, `i18n`, `dispose()`).
+   - `demos/games/snake/` – Classic 20×20 Snake demo (`manifest.json`).
+   - `demos/games/snake2/` – Snake 2: Arena demo with obstacle pillars and dual targets (`manifest.json`).
+   - Each demo provides an `AppManifest` declaring the compatible `engineVersion` and exports a mount function returning a `DemoSession` (`id`, `name`, `manifest`, `hooks`, `i18n`, `dispose()`).
 
 4. **`demos/html5_launcher/` (`dist/assets/launcher-*.js`)** – HTML5 Demo Wrapper Application:
    - Initializes the viewport stage, mounts the active demo from `demoRegistry.ts`, and binds `DebugToolbar`.

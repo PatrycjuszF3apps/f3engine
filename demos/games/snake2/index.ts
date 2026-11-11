@@ -1,4 +1,5 @@
 import {
+  AppManifest,
   ColorPalette,
   GameLoop,
   GamepadAction,
@@ -17,6 +18,7 @@ import {
   VirtualUIDecorator,
   VirtualViewport,
 } from '../../../engine';
+import manifestData from './manifest.json';
 import {
   DIFFICULTY_PRESETS,
   DEFAULT_SNAKE_STATE,
@@ -32,6 +34,8 @@ import {
   SupportedLocale,
   type DemoSession,
 } from '../snake';
+
+export const SNAKE2_MANIFEST: AppManifest = manifestData;
 
 const STORAGE_KEY_SNAKE2 = 'f3engine_snake2_settings_v1';
 
@@ -548,6 +552,7 @@ export function mountSnake2Demo(container: HTMLElement): DemoSession {
 
   const viewport = new VirtualViewport({
     container,
+    manifest: SNAKE2_MANIFEST,
     virtualWidth: SNAKE_VIEWPORT_DEFAULTS.virtualWidth,
     aspectRatio: SNAKE_VIEWPORT_DEFAULTS.aspectRatio,
     windowScalePercent: SNAKE_VIEWPORT_DEFAULTS.windowScalePercent,
@@ -1139,8 +1144,9 @@ export function mountSnake2Demo(container: HTMLElement): DemoSession {
   window.addEventListener('keydown', handleKeyDown);
 
   return {
-    id: 'snake2',
-    name: 'Snake 2: Arena',
+    id: SNAKE2_MANIFEST.id,
+    name: SNAKE2_MANIFEST.name,
+    manifest: SNAKE2_MANIFEST,
     hooks: viewport.getDebugHooks(),
     i18n,
     dispose: () => {

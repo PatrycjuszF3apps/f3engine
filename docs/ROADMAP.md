@@ -10,6 +10,7 @@ This document tracks completed milestones and outlines upcoming enhancements for
 - [x] **M2: Decoupled Debug Bar (`degub_bar/`)** – Engine exposes DOM-agnostic `EngineDebugHooks`; `DebugToolbar` binds purely via hooks without engine awareness of debug HTML.
 - [x] **M3: HTML5 Demo Launcher & Multi-Demo Switching (`demos/html5_launcher/`)** – Demo catalog supporting live switching and clean engine resets between **Snake (Classic)** and **Snake 2: Arena**.
 - [x] **M4: Multi-Modal Controls & Retro Filters** – Keyboard, Gamepad API (with rumble), and virtual pointer controls across `None`, `CRT Scanlines`, and `Old Nokia` video filters.
+- [x] **M5: Engine Versioning & Application Manifests (`engine/version.ts`)** – Semantic engine versioning (`ENGINE_VERSION`), per-game `manifest.json` (`AppManifest`) declaring target engine compatibility, and live Engine vs. Manifest version comparison in `DebugToolbar`.
 
 ---
 

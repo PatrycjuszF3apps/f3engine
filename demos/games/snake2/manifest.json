@@ -1,0 +1,7 @@
+{
+  "id": "snake2",
+  "name": "Snake 2: Arena",
+  "version": "1.0.0",
+  "engineVersion": "1.0.0",
+  "description": "Arena variant with obstacle pillars and dual targets."
+}

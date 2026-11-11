@@ -1,3 +1,13 @@
+export {
+  ENGINE_NAME,
+  ENGINE_VERSION,
+  parseSemVer,
+  isEngineVersionCompatible,
+  checkEngineVersion,
+  type SemVerParts,
+  type AppManifest,
+  type EngineVersionCheckResult,
+} from './version';
 export { GameLoop, type GameLoopCallbacks } from './GameLoop';
 export { StorageStore, type StoreListener } from './StorageStore';
 export {

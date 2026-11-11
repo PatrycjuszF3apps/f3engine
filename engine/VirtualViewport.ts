@@ -6,6 +6,12 @@ import {
   WebGLRendererBackend,
 } from './RendererBackend';
 import { IVirtualSurface, VirtualFramebuffer } from './VirtualSurface';
+import {
+  AppManifest,
+  ENGINE_VERSION,
+  EngineVersionCheckResult,
+  checkEngineVersion,
+} from './version';
 
 export type ViewportAspectRatio =
   | '16:9-horizontal'
@@ -31,6 +37,9 @@ export interface VirtualPointerEvent {
 }
 
 export interface VirtualViewportState {
+  engineVersion: string;
+  appManifest: AppManifest | null;
+  versionCheck: EngineVersionCheckResult;
   virtualWidth: number;
   virtualHeight: number;
   aspectRatio: ViewportAspectRatio;
@@ -57,6 +66,8 @@ export interface VirtualViewportState {
  */
 export interface EngineDebugHooks {
   getState(): VirtualViewportState;
+  getEngineVersion(): string;
+  getAppManifest(): AppManifest | null;
   subscribe(listener: ViewportStateListener): () => void;
   setVirtualGrid(
     width: number,
@@ -73,6 +84,7 @@ export interface EngineDebugHooks {
 
 export interface VirtualViewportConfig {
   container: HTMLElement;
+  manifest?: AppManifest;
   virtualWidth: number;
   virtualHeight?: number;
   aspectRatio: ViewportAspectRatio;
@@ -132,6 +144,7 @@ export class VirtualViewport {
   private cursorPosition: { vx: number; vy: number } | null = null;
 
   private palette: ColorPalette;
+  private appManifest: AppManifest | null;
   private readonly framebuffer: VirtualFramebuffer;
   private backend: IRendererBackend;
   private canvasAriaLabel?: string;
@@ -198,6 +211,7 @@ export class VirtualViewport {
     this.lockAspectRatio = config.lockAspectRatio ?? true;
     this.uiScaleOverride = config.uiScaleOverride ?? null;
     this.palette = config.palette;
+    this.appManifest = config.manifest ?? null;
     this.canvasAriaLabel = config.canvasAriaLabel;
 
     this.defaultConfig = {
@@ -246,6 +260,8 @@ export class VirtualViewport {
   public getDebugHooks(): EngineDebugHooks {
     return {
       getState: () => this.getState(),
+      getEngineVersion: () => this.getEngineVersion(),
+      getAppManifest: () => this.getAppManifest(),
       subscribe: (listener) => this.subscribe(listener),
       setVirtualGrid: (width, aspectRatio, customHeight) =>
         this.setVirtualGrid(width, aspectRatio, customHeight),
@@ -257,6 +273,19 @@ export class VirtualViewport {
       resetToDefaults: () => this.resetToDefaults(),
       updatePhysicalSize: () => this.updatePhysicalSize(),
     };
+  }
+
+  public getEngineVersion(): string {
+    return ENGINE_VERSION;
+  }
+
+  public getAppManifest(): AppManifest | null {
+    return this.appManifest;
+  }
+
+  public setAppManifest(manifest: AppManifest | null): void {
+    this.appManifest = manifest;
+    this.notifyState();
   }
 
   public getSurface(): IVirtualSurface {
@@ -472,6 +501,9 @@ export class VirtualViewport {
 
   public getState(): VirtualViewportState {
     return {
+      engineVersion: ENGINE_VERSION,
+      appManifest: this.appManifest,
+      versionCheck: checkEngineVersion(this.appManifest, ENGINE_VERSION),
       virtualWidth: this.virtualWidth,
       virtualHeight: this.virtualHeight,
       aspectRatio: this.aspectRatio,
