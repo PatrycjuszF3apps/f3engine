@@ -1,0 +1,16 @@
+{
+  "name": "f3engine",
+  "version": "1.0.0",
+  "description": "Modular 2D Virtual Viewport Game Engine with decoupled Debug Bar and HTML5 Demo Launcher",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.2.0"
+  }
+}
