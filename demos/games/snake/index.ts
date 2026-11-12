@@ -4,7 +4,9 @@ import {
   GamepadAction,
   GamepadDirection,
   GamepadManager,
+  HP_100LX_6X8_FONT,
   I18nManager,
+  IBM_BIOS_8X8_FONT,
   MenuScreenConfig,
   MenuSystem,
   OverlayManager,
@@ -83,6 +85,11 @@ export function mountSnakeDemo(container: HTMLElement): DemoSession {
   filterManager.attachViewport(viewport);
 
   const uiDecorator = new VirtualUIDecorator(viewport);
+  // Use two engine default fonts simultaneously: IBM PC BIOS 8x8 for headings/scores + HP 100LX 6x8 for HUD/body
+  uiDecorator.setFonts({
+    body: HP_100LX_6X8_FONT,
+    heading: IBM_BIOS_8X8_FONT,
+  });
   const menu = new MenuSystem(uiDecorator);
   const overlayManager = new OverlayManager(uiDecorator);
 

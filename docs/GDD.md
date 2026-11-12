@@ -1,9 +1,9 @@
 # Game Design Document (GDD) — Snake Demos
 
 ## 1. High Concept
-Two classic arcade **Snake** demos built on **f3engine**, combining responsive grid gameplay with retro display emulation (**CRT Scanlines** and **Old Nokia 3310 LCD**):
-- **Demo 1 (`demos/games/snake`)**: Classic 20×20 arcade Snake.
-- **Demo 2 (`demos/games/snake2`)**: **Snake 2: Arena** featuring four corner L-shaped obstacle pillars, a gold/violet cyberpunk palette, and two simultaneous apples on the board.
+Two classic arcade **Snake** demos built on **f3engine**, combining responsive grid gameplay with retro display emulation (**CRT Scanlines** and **Old Nokia 3310 LCD**) and multi-font pixel-mask typography:
+- **Demo 1 (`demos/games/snake`)**: Classic 20×20 arcade Snake using two built-in **Engine Default Fonts** simultaneously (`IBM PC BIOS 8×8` for titles/headings/score values and `HP 100LX 6×8` for HUD controls, badges, and menus).
+- **Demo 2 (`demos/games/snake2`)**: **Snake 2: Arena** featuring four corner L-shaped obstacle pillars, a gold/violet cyberpunk palette, two simultaneous apples on the board, and **Custom Game-Bundled Third-Party Fonts** (`demos/games/snake2/fonts/`: `Amstrad PC 8×8` for headings/scores and `ATI SmallWonder 6×8` with NFD-synthesized national diacritics for HUD and body text).
 
 ---
 

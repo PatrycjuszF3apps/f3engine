@@ -35,6 +35,7 @@ The repository is structured into four strictly separated layers bundled into de
   - `npm run dev` – Starts the Vite development server (`http://localhost:5173/`).
   - `npm run build` – Runs full TypeScript typechecking (`tsc`) and builds production bundles into `dist/`.
   - `npm run preview` – Serves the production build locally.
+  - `npm run compile-font` – Compiles `.otb`/`.ttf`/`.bdf` bitmap fonts into `VirtualFontSpec` 1-bit pixel masks with national locale character presets (`en`, `pl`, `de`, `cs`, `fi`, `latin-ext`).
 
 ---
 
@@ -64,5 +65,6 @@ After modifying rendering logic, UI layouts, or CSS styles:
 
 - [`README.md`](./README.md) – Repository overview, directory layout, and quick start guide.
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) – Detailed multi-bundle architecture, `EngineDebugHooks` contract, and rendering pipeline.
+- [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) – Architectural Decision Records (ADR) logging design choices and trade-offs.
 - [`docs/GDD.md`](./docs/GDD.md) – Game Design Document for the included Snake demos.
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) – Completed milestones and backlog for future engine/demo iterations.

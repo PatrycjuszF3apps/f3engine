@@ -1,7 +1,7 @@
 {
   "id": "snake",
   "name": "Snake (Classic)",
-  "version": "1.0.0",
-  "engineVersion": "1.0.0",
+  "version": "1.1.0",
+  "engineVersion": "1.1.0",
   "description": "Classic 20x20 arcade Snake with CRT & Nokia 3310 filters."
 }

@@ -1,6 +1,11 @@
 import { PaletteColorToken } from './Palette';
 import { IVirtualSurface, VirtualRect } from './VirtualSurface';
-import { TextAlign } from './VirtualFont';
+import {
+  TextAlign,
+  VirtualFont,
+  VirtualFontRef,
+  VirtualFontSpec,
+} from './VirtualFont';
 import { VirtualViewport } from './VirtualViewport';
 
 export interface VirtualUITheme {
@@ -15,6 +20,8 @@ export interface VirtualUITheme {
   accent: PaletteColorToken;
   accentBright: PaletteColorToken;
   overlayDim: PaletteColorToken;
+  bodyFont?: VirtualFontRef;
+  headingFont?: VirtualFontRef;
 }
 
 export const DEFAULT_UI_THEME: VirtualUITheme = {
@@ -52,6 +59,7 @@ export interface VirtualPanelOptions {
 export interface VirtualButtonOptions {
   active?: boolean;
   accent?: boolean;
+  font?: VirtualFontRef;
   fontScale?: number;
   layer?: HitLayer;
   onHover?: () => void;
@@ -72,7 +80,10 @@ export class VirtualUIDecorator {
 
   constructor(viewport: VirtualViewport, theme: VirtualUITheme = DEFAULT_UI_THEME) {
     this.viewport = viewport;
-    this.theme = theme;
+    this.theme = { ...theme };
+    if (theme.bodyFont) {
+      this.viewport.getSurface().setFontFace(theme.bodyFont);
+    }
 
     this.viewport.onPointerMove(({ vx, vy }) => {
       this.handlePointerMove(vx, vy);
@@ -103,7 +114,38 @@ export class VirtualUIDecorator {
   }
 
   public setTheme(theme: VirtualUITheme): void {
-    this.theme = theme;
+    this.theme = { ...theme };
+    if (theme.bodyFont) {
+      this.viewport.getSurface().setFontFace(theme.bodyFont);
+    }
+  }
+
+  /**
+   * Configures simultaneous body and heading font faces for multi-font UI rendering.
+   */
+  public setFonts(fonts: {
+    body?: VirtualFontRef;
+    heading?: VirtualFontRef;
+  }): void {
+    if (fonts.body !== undefined) {
+      this.theme.bodyFont = fonts.body;
+      this.viewport.getSurface().setFontFace(fonts.body);
+    }
+    if (fonts.heading !== undefined) {
+      this.theme.headingFont = fonts.heading;
+    }
+  }
+
+  public getBodyFont(): VirtualFontSpec {
+    return this.theme.bodyFont
+      ? VirtualFont.getFont(this.theme.bodyFont)
+      : this.viewport.getSurface().getFontFace();
+  }
+
+  public getHeadingFont(): VirtualFontSpec {
+    return this.theme.headingFont
+      ? VirtualFont.getFont(this.theme.headingFont)
+      : this.getBodyFont();
   }
 
   /**
@@ -213,6 +255,7 @@ export class VirtualUIDecorator {
     y: number,
     options: {
       color?: PaletteColorToken;
+      font?: VirtualFontRef;
       scale?: number;
       align?: TextAlign;
       shadowColor?: PaletteColorToken;
@@ -221,6 +264,7 @@ export class VirtualUIDecorator {
     const surface = this.getSurface();
     return surface.drawText(text, x, y, {
       color: options.color ?? this.theme.textMain,
+      font: options.font ?? this.getBodyFont(),
       scale: options.scale ?? 1,
       align: options.align ?? 'left',
       shadowColor: options.shadowColor,
@@ -234,6 +278,7 @@ export class VirtualUIDecorator {
     maxWidth: number,
     options: {
       color?: PaletteColorToken;
+      font?: VirtualFontRef;
       scale?: number;
       align?: TextAlign;
       lineHeight?: number;
@@ -242,6 +287,7 @@ export class VirtualUIDecorator {
     const surface = this.getSurface();
     return surface.drawWrappedText(text, x, y, maxWidth, {
       color: options.color ?? this.theme.textMain,
+      font: options.font ?? this.getBodyFont(),
       scale: options.scale ?? 1,
       align: options.align ?? 'left',
       lineHeight: options.lineHeight,
@@ -256,6 +302,7 @@ export class VirtualUIDecorator {
       bgColor?: PaletteColorToken;
       borderColor?: PaletteColorToken;
       textColor?: PaletteColorToken;
+      font?: VirtualFontRef;
       scale?: number;
       paddingX?: number;
       paddingY?: number;
@@ -263,10 +310,11 @@ export class VirtualUIDecorator {
     } = {}
   ): VirtualRect {
     const surface = this.getSurface();
+    const font = options.font ?? this.getBodyFont();
     const scale = options.scale ?? 1;
     const padX = options.paddingX ?? Math.max(2, Math.round(3 * scale));
     const padY = options.paddingY ?? Math.max(2, Math.round(2 * scale));
-    const measured = surface.measureText(text, scale);
+    const measured = surface.measureText(text, scale, undefined, font);
     const w = measured.width + padX * 2;
     const h = measured.height + padY * 2;
     const rx = options.alignRight ? Math.round(x - w) : Math.round(x);
@@ -278,6 +326,7 @@ export class VirtualUIDecorator {
     }
     surface.drawText(text, rx + padX, ry + padY, {
       color: options.textColor ?? this.theme.accentBright,
+      font,
       scale,
       align: 'left',
     });
@@ -299,23 +348,49 @@ export class VirtualUIDecorator {
     });
 
     const uiScale = this.viewport.getUIScale();
+    const labelFont = this.getBodyFont();
+    const headingFont = this.getHeadingFont();
     const labelScale = uiScale >= 1.75 ? 2 : 1;
-    const valScale = uiScale >= 1.5 && rect.height >= 36 ? 2 : 1;
+    const candidateValScale = uiScale >= 1.5 && rect.height >= 36 ? 2 : 1;
 
-    const labelMetrics = surface.measureText(label, labelScale);
-    const valMetrics = surface.measureText(value, valScale);
-    const totalContentH = labelMetrics.height + valMetrics.height + 4;
+    const labelMetrics = surface.measureText(
+      label,
+      labelScale,
+      undefined,
+      labelFont
+    );
+    const headingAtCandidate = surface.measureText(
+      value,
+      candidateValScale,
+      undefined,
+      headingFont
+    );
+    const valScale =
+      headingAtCandidate.width > rect.width - 4 ? 1 : candidateValScale;
+    const headingAtScale = surface.measureText(
+      value,
+      valScale,
+      undefined,
+      headingFont
+    );
+    const valueFont =
+      headingAtScale.width > rect.width - 4 ? labelFont : headingFont;
+    const valMetrics = surface.measureText(value, valScale, undefined, valueFont);
+
+    const totalContentH = labelMetrics.height + valMetrics.height + 3;
     const startY = Math.round(rect.y + (rect.height - totalContentH) / 2);
     const centerX = Math.round(rect.x + rect.width / 2);
 
     surface.drawText(label, centerX, startY, {
       color: this.theme.textMuted,
+      font: labelFont,
       scale: labelScale,
       align: 'center',
     });
 
-    surface.drawText(value, centerX, startY + labelMetrics.height + 4, {
+    surface.drawText(value, centerX, startY + labelMetrics.height + 3, {
       color: isAccent ? this.theme.accentBright : this.theme.textMain,
+      font: valueFont,
       scale: valScale,
       align: 'center',
     });
@@ -329,6 +404,7 @@ export class VirtualUIDecorator {
     options: VirtualButtonOptions = {}
   ): void {
     const surface = this.getSurface();
+    const font = options.font ?? this.getBodyFont();
     const layer = options.layer ?? 'hud';
     const hovered = this.isHovered(id) && (!this.modalActive || layer === 'modal');
     const highlighted = Boolean(options.active || hovered);
@@ -356,15 +432,21 @@ export class VirtualUIDecorator {
 
     const uiScale = this.viewport.getUIScale();
     const candidateScale = options.fontScale ?? (uiScale >= 1.75 && rect.height >= 28 ? 2 : 1);
-    const measuredAtCandidate = surface.measureText(label, candidateScale);
+    const measuredAtCandidate = surface.measureText(
+      label,
+      candidateScale,
+      undefined,
+      font
+    );
     const fontScale =
       measuredAtCandidate.width > rect.width - 4 ? 1 : candidateScale;
-    const measured = surface.measureText(label, fontScale);
+    const measured = surface.measureText(label, fontScale, undefined, font);
     const textX = Math.round(rect.x + rect.width / 2);
     const textY = Math.round(rect.y + (rect.height - measured.height) / 2);
 
     surface.drawText(label, textX, textY, {
       color: textColor,
+      font,
       scale: fontScale,
       align: 'center',
     });

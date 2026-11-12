@@ -2,6 +2,8 @@ import { ColorPalette, PaletteColorToken, PaletteIndex } from './Palette';
 import {
   PixelPlotter,
   VirtualFont,
+  VirtualFontRef,
+  VirtualFontSpec,
   VirtualTextOptions,
 } from './VirtualFont';
 
@@ -92,8 +94,11 @@ export interface IVirtualSurface extends PixelPlotter {
   measureText(
     text: string,
     scale?: number,
-    letterSpacing?: number
+    letterSpacing?: number,
+    font?: VirtualFontRef
   ): { width: number; height: number };
+  getFontFace(): VirtualFontSpec;
+  setFontFace(font: VirtualFontRef): void;
   setClipRect(rect: VirtualRect | null): void;
 }
 
@@ -106,12 +111,19 @@ export class VirtualFramebuffer implements IVirtualSurface {
   public height: number;
   private indices: Uint8Array;
   private palette: ColorPalette;
+  private fontFace: VirtualFontSpec;
   private clipRect: VirtualRect | null = null;
 
-  constructor(width: number, height: number, palette: ColorPalette) {
+  constructor(
+    width: number,
+    height: number,
+    palette: ColorPalette,
+    font?: VirtualFontRef
+  ) {
     this.width = Math.max(1, Math.round(width));
     this.height = Math.max(1, Math.round(height));
     this.palette = palette;
+    this.fontFace = VirtualFont.getFont(font);
     this.indices = new Uint8Array(this.width * this.height);
   }
 
@@ -386,13 +398,24 @@ export class VirtualFramebuffer implements IVirtualSurface {
     }
   }
 
+  public getFontFace(): VirtualFontSpec {
+    return this.fontFace;
+  }
+
+  public setFontFace(font: VirtualFontRef): void {
+    this.fontFace = VirtualFont.getFont(font);
+  }
+
   public drawText(
     text: string,
     x: number,
     y: number,
     options: VirtualTextOptions
   ): { width: number; height: number } {
-    return VirtualFont.drawText(this, text, x, y, options);
+    return VirtualFont.drawText(this, text, x, y, {
+      ...options,
+      font: options.font ?? this.fontFace,
+    });
   }
 
   public drawWrappedText(
@@ -402,15 +425,24 @@ export class VirtualFramebuffer implements IVirtualSurface {
     maxWidth: number,
     options: VirtualTextOptions
   ): { width: number; height: number; lines: number } {
-    return VirtualFont.drawWrappedText(this, text, x, y, maxWidth, options);
+    return VirtualFont.drawWrappedText(this, text, x, y, maxWidth, {
+      ...options,
+      font: options.font ?? this.fontFace,
+    });
   }
 
   public measureText(
     text: string,
     scale = 1,
-    letterSpacing?: number
+    letterSpacing?: number,
+    font?: VirtualFontRef
   ): { width: number; height: number } {
-    return VirtualFont.measureText(text, scale, letterSpacing);
+    return VirtualFont.measureText(
+      text,
+      scale,
+      letterSpacing,
+      font ?? this.fontFace
+    );
   }
 
   private isInside(x: number, y: number): boolean {

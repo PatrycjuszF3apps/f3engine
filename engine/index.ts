@@ -19,10 +19,31 @@ export {
 } from './Palette';
 export {
   VirtualFont,
+  DEFAULT_FONT_ID,
+  F3_RETRO_5X7_FONT,
+  type CompiledGlyph,
+  type VirtualFontSpec,
+  type VirtualFontRef,
   type TextAlign,
   type VirtualTextOptions,
   type PixelPlotter,
 } from './VirtualFont';
+export {
+  HP_100LX_6X8_FONT,
+  IBM_BIOS_8X8_FONT,
+  IBM_CGATHIN_8X8_FONT,
+} from './fonts';
+export {
+  CHARSET_PRESETS,
+  compileSfntBitmapFont,
+  compileBdfFont,
+  synthesizeNationalGlyph,
+  resolveTargetCharacters,
+  validateFontLocaleCoverage,
+  type CharsetPresetId,
+  type FontCompileOptions,
+  type FontCoverageReport,
+} from './VirtualFontCompiler';
 export {
   VirtualFramebuffer,
   type IVirtualSurface,

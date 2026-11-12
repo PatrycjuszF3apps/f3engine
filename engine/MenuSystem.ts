@@ -159,7 +159,8 @@ export class MenuSystem {
     const rawScale = this.ui.getViewport().getUIScale();
     const bigMode = rawScale >= 1.6 && area.width >= 380 && area.height >= 360;
 
-    const titleScale = bigMode ? 2 : 1;
+    const headingFont = this.ui.getHeadingFont();
+    const candidateTitleScale = bigMode ? 2 : 1;
     const subScale = 1;
     const itemScale = bigMode ? 2 : 1;
     const pillScale = 1;
@@ -173,7 +174,20 @@ export class MenuSystem {
     );
     const innerW = boxW - padX * 2;
 
-    const titleH = surface.measureText(title, titleScale).height;
+    const titleAtCandidate = surface.measureText(
+      title,
+      candidateTitleScale,
+      undefined,
+      headingFont
+    );
+    const titleScale =
+      titleAtCandidate.width > innerW ? 1 : candidateTitleScale;
+    const titleH = surface.measureText(
+      title,
+      titleScale,
+      undefined,
+      headingFont
+    ).height;
     const subLines = subtitle
       ? surface.drawWrappedText(subtitle, 0, -1000, innerW, {
           color: theme.textMuted,
@@ -232,6 +246,7 @@ export class MenuSystem {
     // Menu Header
     this.ui.drawText(title, centerX, cursorY, {
       color: theme.accentBright,
+      font: headingFont,
       scale: titleScale,
       align: 'center',
     });

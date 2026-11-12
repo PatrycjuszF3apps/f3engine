@@ -1,9 +1,45 @@
 import { PaletteColorToken } from './Palette';
+import {
+  CHARSET_PRESETS,
+  synthesizeNationalGlyph,
+} from './VirtualFontCompiler';
+import {
+  HP_100LX_6X8_FONT,
+  IBM_BIOS_8X8_FONT,
+  IBM_CGATHIN_8X8_FONT,
+} from './fonts';
 
 export type TextAlign = 'left' | 'center' | 'right';
 
+export interface CompiledGlyph {
+  readonly width: number;
+  readonly height: number;
+  readonly offsetX?: number;
+  readonly offsetY?: number;
+  readonly advance?: number;
+  /** 1-bit pixel mask rows ('1' = active virtual pixel, '0' = transparent) */
+  readonly rows: readonly string[];
+}
+
+export interface VirtualFontSpec {
+  readonly id: string;
+  readonly name: string;
+  readonly author?: string;
+  readonly license?: string;
+  readonly baseWidth: number;
+  readonly baseHeight: number;
+  readonly lineHeight: number;
+  readonly defaultSpacing: number;
+  readonly supportedLocales: readonly string[];
+  readonly fallbackGlyph: CompiledGlyph;
+  readonly glyphs: Readonly<Record<string, CompiledGlyph>>;
+}
+
+export type VirtualFontRef = string | VirtualFontSpec;
+
 export interface VirtualTextOptions {
   color: PaletteColorToken;
+  font?: VirtualFontRef;
   scale?: number;
   align?: TextAlign;
   letterSpacing?: number;
@@ -16,9 +52,10 @@ export interface PixelPlotter {
   setPixel(x: number, y: number, color: PaletteColorToken): void;
 }
 
+export const DEFAULT_FONT_ID = 'f3-retro-5x7';
+
 /**
- * 5x7 bitmap glyph definitions for the virtual pixel grid.
- * Each glyph is an array of 7 rows of 5 characters ('1' = active virtual pixel, '0' = transparent).
+ * Built-in 5x7 bitmap glyph definitions for the classic engine fallback font.
  */
 const GLYPHS_5X7: Record<string, readonly string[]> = {
   ' ': ['00000', '00000', '00000', '00000', '00000', '00000', '00000'],
@@ -31,11 +68,12 @@ const GLYPHS_5X7: Record<string, readonly string[]> = {
   "'": ['00100', '00100', '00000', '00000', '00000', '00000', '00000'],
   '(': ['00010', '00100', '01000', '01000', '01000', '00100', '00010'],
   ')': ['01000', '00100', '00010', '00010', '00010', '00100', '01000'],
-  '*': ['00100', '10101', '01110', '11111', '01110', '10101', '00100'],
+  '*': ['00100', '10101', '01110', '11111', '01110', '10101', '00000'],
   '+': ['00000', '00100', '00100', '11111', '00100', '00100', '00000'],
   ',': ['00000', '00000', '00000', '00000', '00100', '00100', '01000'],
   '-': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'],
   '–': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'],
+  '—': ['00000', '00000', '00000', '11111', '00000', '00000', '00000'],
   '.': ['00000', '00000', '00000', '00000', '00000', '00100', '00100'],
   '/': ['00001', '00010', '00100', '00100', '01000', '10000', '00000'],
   '0': ['01110', '10001', '10011', '10101', '11001', '10001', '01110'],
@@ -150,51 +188,178 @@ const GLYPHS_5X7: Record<string, readonly string[]> = {
   '🎮': ['01110', '11111', '10101', '11111', '11011', '10001', '00000'],
 };
 
-const FALLBACK_GLYPH = GLYPHS_5X7['?'];
+function createF3Retro5x7FontSpec(): VirtualFontSpec {
+  const glyphs: Record<string, CompiledGlyph> = {};
+  for (const [ch, rows] of Object.entries(GLYPHS_5X7)) {
+    glyphs[ch] = {
+      width: 5,
+      height: 7,
+      rows,
+    };
+  }
+
+  // Synthesize German, Czech, and Finnish characters via NFD decomposition
+  const extraNationalChars =
+    CHARSET_PRESETS.de + CHARSET_PRESETS.cs + CHARSET_PRESETS.fi;
+  for (const ch of extraNationalChars) {
+    if (!(ch in glyphs)) {
+      const synthRows = synthesizeNationalGlyph(
+        ch,
+        (base) => GLYPHS_5X7[base] ?? null,
+        5,
+        7
+      );
+      if (synthRows) {
+        glyphs[ch] = {
+          width: 5,
+          height: 7,
+          rows: synthRows,
+        };
+      }
+    }
+  }
+
+  return {
+    id: DEFAULT_FONT_ID,
+    name: 'F3 Retro 5x7',
+    author: 'f3engine',
+    license: 'MIT',
+    baseWidth: 5,
+    baseHeight: 7,
+    lineHeight: 7,
+    defaultSpacing: 1,
+    supportedLocales: ['en', 'pl', 'de', 'cs', 'fi'],
+    fallbackGlyph: glyphs['?'],
+    glyphs,
+  };
+}
+
+export const F3_RETRO_5X7_FONT: VirtualFontSpec = createF3Retro5x7FontSpec();
 
 /**
- * Bitmap font rasterizer operating on the virtual pixel grid.
- * Supports integer scaling on virtual pixels, horizontal alignment, and word wrapping.
+ * Bitmap font registry and rasterizer operating strictly on the virtual pixel grid.
+ * Supports multiple compiled font faces (`VirtualFontSpec`), integer scaling on virtual pixels,
+ * horizontal alignment, word wrapping, and drop shadows.
  */
 export class VirtualFont {
   public static readonly BASE_WIDTH = 5;
   public static readonly BASE_HEIGHT = 7;
 
+  private static readonly registry = new Map<string, VirtualFontSpec>([
+    [F3_RETRO_5X7_FONT.id, F3_RETRO_5X7_FONT],
+    [HP_100LX_6X8_FONT.id, HP_100LX_6X8_FONT],
+    [IBM_BIOS_8X8_FONT.id, IBM_BIOS_8X8_FONT],
+    [IBM_CGATHIN_8X8_FONT.id, IBM_CGATHIN_8X8_FONT],
+  ]);
+
+  private static defaultFontId = DEFAULT_FONT_ID;
+
+  /**
+   * Registers a compiled 1-bit pixel-mask font specification (`VirtualFontSpec`)
+   * so it can be referenced by ID across any surface or UI decorator.
+   */
+  public static registerFont(spec: VirtualFontSpec): void {
+    VirtualFont.registry.set(spec.id, spec);
+  }
+
+  public static unregisterFont(id: string): boolean {
+    if (id === DEFAULT_FONT_ID) return false;
+    return VirtualFont.registry.delete(id);
+  }
+
+  public static hasFont(id: string): boolean {
+    return VirtualFont.registry.has(id);
+  }
+
+  public static listFonts(): VirtualFontSpec[] {
+    return Array.from(VirtualFont.registry.values());
+  }
+
+  public static setDefaultFont(font: VirtualFontRef): void {
+    if (typeof font === 'string') {
+      if (VirtualFont.registry.has(font)) {
+        VirtualFont.defaultFontId = font;
+      }
+    } else {
+      VirtualFont.registerFont(font);
+      VirtualFont.defaultFontId = font.id;
+    }
+  }
+
+  public static getDefaultFont(): VirtualFontSpec {
+    return (
+      VirtualFont.registry.get(VirtualFont.defaultFontId) ?? F3_RETRO_5X7_FONT
+    );
+  }
+
+  public static getFont(font?: VirtualFontRef): VirtualFontSpec {
+    if (!font) {
+      return VirtualFont.getDefaultFont();
+    }
+    if (typeof font === 'string') {
+      return VirtualFont.registry.get(font) ?? VirtualFont.getDefaultFont();
+    }
+    return font;
+  }
+
   public static normalizeScale(scale = 1): number {
     return Math.max(1, Math.round(scale));
   }
 
-  public static getGlyphWidth(scale = 1): number {
-    return VirtualFont.BASE_WIDTH * VirtualFont.normalizeScale(scale);
+  public static getGlyphWidth(scale = 1, font?: VirtualFontRef): number {
+    const spec = VirtualFont.getFont(font);
+    return spec.baseWidth * VirtualFont.normalizeScale(scale);
   }
 
-  public static getGlyphHeight(scale = 1): number {
-    return VirtualFont.BASE_HEIGHT * VirtualFont.normalizeScale(scale);
+  public static getGlyphHeight(scale = 1, font?: VirtualFontRef): number {
+    const spec = VirtualFont.getFont(font);
+    return spec.baseHeight * VirtualFont.normalizeScale(scale);
   }
 
-  public static getSpacing(scale = 1, customSpacing?: number): number {
+  public static getSpacing(
+    scale = 1,
+    customSpacing?: number,
+    font?: VirtualFontRef
+  ): number {
     if (customSpacing !== undefined) {
-      return Math.max(1, Math.round(customSpacing));
+      return Math.max(0, Math.round(customSpacing));
     }
-    return VirtualFont.normalizeScale(scale);
+    const spec = VirtualFont.getFont(font);
+    return Math.max(0, spec.defaultSpacing * VirtualFont.normalizeScale(scale));
   }
 
   public static measureText(
     text: string,
     scale = 1,
-    letterSpacing?: number
+    letterSpacing?: number,
+    font?: VirtualFontRef
   ): { width: number; height: number } {
+    const spec = VirtualFont.getFont(font);
+    const normScale = VirtualFont.normalizeScale(scale);
     const chars = Array.from(text);
-    const glyphW = VirtualFont.getGlyphWidth(scale);
-    const glyphH = VirtualFont.getGlyphHeight(scale);
-    const spacing = VirtualFont.getSpacing(scale, letterSpacing);
+    const glyphH = spec.baseHeight * normScale;
+    const spacing = VirtualFont.getSpacing(scale, letterSpacing, spec);
 
     if (chars.length === 0) {
       return { width: 0, height: glyphH };
     }
 
+    let totalWidth = 0;
+    for (let i = 0; i < chars.length; i++) {
+      const ch = chars[i];
+      const glyph =
+        spec.glyphs[ch] ??
+        spec.glyphs[ch.toUpperCase()] ??
+        spec.fallbackGlyph;
+      const adv = (glyph.advance ?? glyph.width) * normScale;
+      totalWidth += adv;
+      if (i < chars.length - 1) {
+        totalWidth += spacing;
+      }
+    }
+
     return {
-      width: chars.length * glyphW + (chars.length - 1) * spacing,
+      width: totalWidth,
       height: glyphH,
     };
   }
@@ -203,7 +368,8 @@ export class VirtualFont {
     text: string,
     maxWidth: number,
     scale = 1,
-    letterSpacing?: number
+    letterSpacing?: number,
+    font?: VirtualFontRef
   ): string[] {
     const words = text.split(' ');
     const lines: string[] = [];
@@ -211,7 +377,12 @@ export class VirtualFont {
 
     for (const word of words) {
       const candidate = currentLine ? `${currentLine} ${word}` : word;
-      const { width } = VirtualFont.measureText(candidate, scale, letterSpacing);
+      const { width } = VirtualFont.measureText(
+        candidate,
+        scale,
+        letterSpacing,
+        font
+      );
       if (width <= maxWidth || !currentLine) {
         currentLine = candidate;
       } else {
@@ -234,12 +405,17 @@ export class VirtualFont {
     y: number,
     options: VirtualTextOptions
   ): { width: number; height: number } {
+    const spec = VirtualFont.getFont(options.font);
     const scale = options.scale ?? 1;
+    const normScale = VirtualFont.normalizeScale(scale);
     const align = options.align ?? 'left';
-    const glyphW = VirtualFont.getGlyphWidth(scale);
-    const glyphH = VirtualFont.getGlyphHeight(scale);
-    const spacing = VirtualFont.getSpacing(scale, options.letterSpacing);
-    const measured = VirtualFont.measureText(text, scale, options.letterSpacing);
+    const spacing = VirtualFont.getSpacing(scale, options.letterSpacing, spec);
+    const measured = VirtualFont.measureText(
+      text,
+      scale,
+      options.letterSpacing,
+      spec
+    );
 
     let startX = Math.round(x);
     if (align === 'center') {
@@ -250,15 +426,15 @@ export class VirtualFont {
     const startY = Math.round(y);
 
     if (options.shadowColor) {
-      const sx = options.shadowOffset?.x ?? Math.max(1, Math.round(scale));
-      const sy = options.shadowOffset?.y ?? Math.max(1, Math.round(scale));
+      const sx = options.shadowOffset?.x ?? normScale;
+      const sy = options.shadowOffset?.y ?? normScale;
       VirtualFont.rasterizeRun(
         plotter,
+        spec,
         text,
         startX + sx,
         startY + sy,
-        glyphW,
-        glyphH,
+        normScale,
         spacing,
         options.shadowColor
       );
@@ -266,11 +442,11 @@ export class VirtualFont {
 
     VirtualFont.rasterizeRun(
       plotter,
+      spec,
       text,
       startX,
       startY,
-      glyphW,
-      glyphH,
+      normScale,
       spacing,
       options.color
     );
@@ -286,10 +462,17 @@ export class VirtualFont {
     maxWidth: number,
     options: VirtualTextOptions
   ): { width: number; height: number; lines: number } {
+    const spec = VirtualFont.getFont(options.font);
     const scale = options.scale ?? 1;
-    const glyphH = VirtualFont.getGlyphHeight(scale);
-    const lineGap = options.lineHeight ?? Math.max(2, Math.round(3 * scale));
-    const lines = VirtualFont.wrapText(text, maxWidth, scale, options.letterSpacing);
+    const glyphH = VirtualFont.getGlyphHeight(scale, spec);
+    const lineGap = options.lineHeight ?? Math.max(2, Math.round(2 * scale));
+    const lines = VirtualFont.wrapText(
+      text,
+      maxWidth,
+      scale,
+      options.letterSpacing,
+      spec
+    );
 
     let maxLineW = 0;
     lines.forEach((line, idx) => {
@@ -307,11 +490,11 @@ export class VirtualFont {
 
   private static rasterizeRun(
     plotter: PixelPlotter,
+    spec: VirtualFontSpec,
     text: string,
     startX: number,
     startY: number,
-    glyphW: number,
-    glyphH: number,
+    normScale: number,
     spacing: number,
     color: PaletteColorToken
   ): void {
@@ -320,28 +503,35 @@ export class VirtualFont {
 
     for (const ch of chars) {
       const glyph =
-        GLYPHS_5X7[ch] ??
-        GLYPHS_5X7[ch.toUpperCase()] ??
-        FALLBACK_GLYPH;
+        spec.glyphs[ch] ??
+        spec.glyphs[ch.toUpperCase()] ??
+        spec.fallbackGlyph;
 
-      for (let py = 0; py < glyphH; py++) {
-        const srcY = Math.min(
-          VirtualFont.BASE_HEIGHT - 1,
-          Math.floor((py * VirtualFont.BASE_HEIGHT) / glyphH)
-        );
-        const rowBits = glyph[srcY];
-        for (let px = 0; px < glyphW; px++) {
-          const srcX = Math.min(
-            VirtualFont.BASE_WIDTH - 1,
-            Math.floor((px * VirtualFont.BASE_WIDTH) / glyphW)
-          );
+      const srcW = glyph.width;
+      const srcH = glyph.height;
+      const dstW = srcW * normScale;
+      const dstH = srcH * normScale;
+      const offsetX = (glyph.offsetX ?? 0) * normScale;
+      const offsetY = (glyph.offsetY ?? 0) * normScale;
+
+      for (let py = 0; py < dstH; py++) {
+        const srcY = Math.min(srcH - 1, Math.floor(py / normScale));
+        const rowBits = glyph.rows[srcY];
+        if (!rowBits) continue;
+        for (let px = 0; px < dstW; px++) {
+          const srcX = Math.min(srcW - 1, Math.floor(px / normScale));
           if (rowBits[srcX] === '1') {
-            plotter.setPixel(cursorX + px, startY + py, color);
+            plotter.setPixel(
+              cursorX + offsetX + px,
+              startY + offsetY + py,
+              color
+            );
           }
         }
       }
 
-      cursorX += glyphW + spacing;
+      const advance = (glyph.advance ?? srcW) * normScale;
+      cursorX += advance + spacing;
     }
   }
 }

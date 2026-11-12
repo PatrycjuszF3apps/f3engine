@@ -14,11 +14,13 @@ import {
   VideoFilterManager,
   VideoFilterPalette,
   VideoFilterType,
+  VirtualFont,
   VirtualRect,
   VirtualUIDecorator,
   VirtualViewport,
 } from '../../../engine';
 import manifestData from './manifest.json';
+import { AMSTRAD_PC_8X8_FONT, ATI_SMALLW_6X8_FONT } from './fonts';
 import {
   DIFFICULTY_PRESETS,
   DEFAULT_SNAKE_STATE,
@@ -562,7 +564,15 @@ export function mountSnake2Demo(container: HTMLElement): DemoSession {
   });
   filterManager.attachViewport(viewport);
 
+  // Register custom third-party compiled fonts shipped inside the Snake 2 game directory
+  VirtualFont.registerFont(AMSTRAD_PC_8X8_FONT);
+  VirtualFont.registerFont(ATI_SMALLW_6X8_FONT);
+
   const uiDecorator = new VirtualUIDecorator(viewport);
+  uiDecorator.setFonts({
+    body: ATI_SMALLW_6X8_FONT,
+    heading: AMSTRAD_PC_8X8_FONT,
+  });
   const menu = new MenuSystem(uiDecorator);
   const overlayManager = new OverlayManager(uiDecorator);
 
@@ -924,6 +934,7 @@ export function mountSnake2Demo(container: HTMLElement): DemoSession {
       topRowY,
       {
         color: theme.accentBright,
+        font: uiDecorator.getHeadingFont(),
         scale: titleScale,
       }
     );

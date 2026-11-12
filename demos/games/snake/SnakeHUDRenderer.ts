@@ -127,6 +127,7 @@ export class SnakeHUDRenderer {
     const titleText = this.i18n.t('header.brand_title');
     const titleM = this.ui.drawText(titleText, headerRect.x + 6, topRowY, {
       color: theme.accentBright,
+      font: this.ui.getHeadingFont(),
       scale: titleScale,
     });
 
@@ -326,6 +327,7 @@ export class SnakeHUDRenderer {
       leftPanel.y + 6,
       {
         color: theme.accentBright,
+        font: this.ui.getHeadingFont(),
         scale: 1.15,
         align: 'center',
       }

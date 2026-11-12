@@ -11,6 +11,7 @@ This document tracks completed milestones and outlines upcoming enhancements for
 - [x] **M3: HTML5 Demo Launcher & Multi-Demo Switching (`demos/html5_launcher/`)** – Demo catalog supporting live switching and clean engine resets between **Snake (Classic)** and **Snake 2: Arena**.
 - [x] **M4: Multi-Modal Controls & Retro Filters** – Keyboard, Gamepad API (with rumble), and virtual pointer controls across `None`, `CRT Scanlines`, and `Old Nokia` video filters.
 - [x] **M5: Engine Versioning & Application Manifests (`engine/version.ts`)** – Semantic engine versioning (`ENGINE_VERSION`), per-game `manifest.json` (`AppManifest`) declaring target engine compatibility, and live Engine vs. Manifest version comparison in `DebugToolbar`.
+- [x] **M6: Multi-Font Pixel-Mask Compilation & Multilingual Charset Support (`engine/VirtualFontCompiler.ts`, `scripts/compile-font.ts`)** – Ahead-of-time compilation of `.otb`/`.ttf`/`.bdf` bitmap fonts to 1-bit pixel masks (`VirtualFontSpec`), national character presets (`en`, `pl`, `de`, `cs`, `fi`, `latin-ext`), Unicode NFD diacritic synthesis, simultaneous multi-font rendering (`bodyFont` + `headingFont`), built-in engine default fonts (`engine/fonts/`), and game-bundled custom third-party fonts (`demos/games/snake2/fonts/`).
 
 ---
 

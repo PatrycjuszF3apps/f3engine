@@ -114,6 +114,7 @@ export class OverlayManager {
       Math.min(area.width / 250, area.height / 240)
     );
 
+    const headingFont = this.ui.getHeadingFont();
     const titleScale = Math.max(0.95, Math.min(1.5, 1.15 * uiScale));
     const msgScale = Math.max(0.75, Math.min(1.15, 0.85 * uiScale));
     const badgeScale = Math.max(0.75, Math.min(1.1, 0.8 * uiScale));
@@ -123,7 +124,12 @@ export class OverlayManager {
     const padY = 6;
     const innerW = boxW - padX * 2;
 
-    const titleH = surface.measureText(this.activeConfig.title, titleScale).height;
+    const titleH = surface.measureText(
+      this.activeConfig.title,
+      titleScale,
+      undefined,
+      headingFont
+    ).height;
     const msgLines = this.activeConfig.message
       ? surface.drawWrappedText(this.activeConfig.message, 0, -1000, innerW, {
           color: theme.textMuted,
@@ -172,6 +178,7 @@ export class OverlayManager {
     let cursorY = boxY + padY;
     this.ui.drawText(this.activeConfig.title, centerX, cursorY, {
       color: theme.textMain,
+      font: headingFont,
       scale: titleScale,
       align: 'center',
     });

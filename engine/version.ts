@@ -5,7 +5,7 @@
  */
 
 export const ENGINE_NAME = 'f3engine';
-export const ENGINE_VERSION = '1.0.0';
+export const ENGINE_VERSION = '1.1.0';
 
 export interface SemVerParts {
   readonly major: number;
