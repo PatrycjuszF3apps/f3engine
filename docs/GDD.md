@@ -1,35 +1,36 @@
 # Game Design Document (GDD) — Snake Demos
 
 ## 1. High Concept
-Two classic arcade **Snake** demos built on **f3engine**, combining responsive grid gameplay with retro display emulation (**CRT Scanlines** and **Old Nokia 3310 LCD**) and multi-font pixel-mask typography:
-- **Demo 1 (`demos/games/snake`)**: Classic 20×20 arcade Snake using two built-in **Engine Default Fonts** simultaneously (`IBM PC BIOS 8×8` for titles/headings/score values and `HP 100LX 6×8` for HUD controls, badges, and menus).
-- **Demo 2 (`demos/games/snake2`)**: **Snake 2: Arena** featuring four corner L-shaped obstacle pillars, a gold/violet cyberpunk palette, two simultaneous apples on the board, and **Custom Game-Bundled Third-Party Fonts** (`demos/games/snake2/fonts/`: `Amstrad PC 8×8` for headings/scores and `ATI SmallWonder 6×8` with NFD-synthesized national diacritics for HUD and body text).
+Two classic arcade **Snake** applications built on **f3engine**, combining responsive grid gameplay with retro display emulation (**CRT Scanlines** and **Old Nokia 3310 LCD**), multi-font pixel-mask typography, and the hierarchical `AppRootNode` + `UIKit.ClassicV1` control architecture:
+- **Demo 1 (`demos/games/snake`)**: Classic 20×20 arcade Snake (`SnakeAppRootNode extends AppRootNode`, `SnakeBoardNode extends CanvasNode`) using two built-in **Engine Default Fonts** simultaneously (`IBM PC BIOS 8×8` for titles/headings/score values and `HP 100LX 6×8` for HUD controls, badges, and menus).
+- **Demo 2 (`demos/games/snake2`)**: **Snake 2: Arena** (`Snake2ArenaBoardNode extends SnakeBoardNode`) featuring four corner L-shaped obstacle pillars, a gold/violet cyberpunk palette, two simultaneous apples on the board, and **Custom Game-Bundled Third-Party Fonts** (`demos/games/snake2/fonts/`: `Amstrad PC 8×8` for headings/scores and `ATI SmallWonder 6×8` with NFD-synthesized national diacritics for HUD and body text).
 
 ---
 
-## 2. Core Gameplay Loop
+## 2. Core Application & Gameplay Flow
 
 ```mermaid
 flowchart LR
-    Title["Title Screen"] -->|New Game| Ready["Ready Overlay"]
-    Ready -->|Any Key / Click / Pad| Gameplay["Gameplay (Collecting Apples)"]
-    Title -->|Settings| Settings["Settings Screen"]
-    Settings -->|Back / Esc| Title
-    Gameplay -->|Space / Esc / Start| Pause["Pause Menu"]
+    Title["TitleDialog (ModalDialogNode)"] -->|New Game| Ready["ReadyPromptDialogNode"]
+    Ready -->|Normalized Direction / Key / Click| Gameplay["SnakeBoardNode (Running)"]
+    Title -->|openSubDialog| Settings["SettingsDialogNode (Cascaded Child)"]
+    Settings -->|Close / Back / Cancel| Title
+    Gameplay -->|Pause / Cancel Action| Pause["PauseDialog (ModalDialogNode)"]
     Pause -->|Resume| Ready
-    Pause -->|Settings| Settings
-    Gameplay -->|Wall / Obstacle / Tail Collision| GameOver["Game Over Screen"]
+    Pause -->|openSubDialog| Settings
+    Gameplay -->|Wall / Obstacle / Tail Collision| GameOver["GameOverDialog (ModalDialogNode)"]
     GameOver -->|New Game| Ready
+    GameOver -->|openSubDialog| Settings
     GameOver -->|Title Screen| Title
 ```
 
-1. Players start on the **Title Screen**, where they can launch a new game or open **Settings** to configure language (`English` / `Polski`), difficulty, and video filter.
-2. Before movement begins, the **Ready Overlay** pauses the board until the player presses any key, gamepad button, or clicks the viewport.
+1. Players start on the **Title Dialog**, where they can launch a new game or open **Settings** (`SettingsDialogNode` opened as a cascading child sub-dialog of the active modal) to configure language (`English` / `Polski`), difficulty, and video filter.
+2. Before movement begins, the **Ready Prompt Dialog** freezes `SnakeBoardNode` until the player triggers any key, gamepad button, directional input, or pointer click. If confirmed with a directional input (`UP`/`DOWN`/`LEFT`/`RIGHT`), `SnakeBoardNode` immediately queues that initial direction.
 3. Eating an apple:
    - Grows the snake by **1 segment**,
    - Awards points (**+10 pts** in Classic Snake, **+15 pts** in Snake 2: Arena) and updates the persisted high score in `localStorage`,
    - Increases movement speed according to the active difficulty preset.
-4. Colliding with the board border, an arena pillar (in Snake 2), or the snake's own tail triggers **Game Over**.
+4. Colliding with the board border, an arena pillar (in Snake 2), or the snake's own tail freezes the board node and opens the **Game Over Dialog**.
 
 ---
 
@@ -67,10 +68,10 @@ Each demo supports three real-time visual profiles:
 
 ---
 
-## 5. Controls & UX
+## 5. Normalized Controls & UX (`InputRouter` + `UIKit.ClassicV1`)
 
-- **Input Queue (`directionQueue`)**: Buffers up to 2 directional changes per logic tick to prevent accidental self-collision during rapid key sequences.
+- **Normalized Direction Queue (`directionQueue`)**: `SnakeBoardNode` receives normalized `DirectionControlEvent`s (`UP`, `DOWN`, `LEFT`, `RIGHT`) regardless of whether they originated from the keyboard, a gamepad, or the on-screen `DPadControl`, buffering up to 2 directional changes per logic tick.
 - **Multi-Modal Navigation**:
-  - **Keyboard**: `Arrow Keys` / `WASD` to steer or navigate menus, `Enter` / `Space` to confirm, `Escape` to pause or go back, `R` for quick restart.
-  - **Gamepad**: D-Pad and analog sticks with deadzone, `A` to confirm, `B` to go back, `Start` to pause, `X`/`Y` to restart, plus `dual-rumble` vibration on scoring and game over.
-  - **Mouse / Touch**: On-screen virtual D-Pad and action buttons (`MENU`, `PAUSE`, `RESTART`), plus hover and click support across all menu rows and choice pills.
+  - **Keyboard**: `Arrow Keys` / `WASD` to steer or navigate `MenuListControl` items, `Enter` / `Space` (`CONFIRM`), `Escape` / `Backspace` (`CANCEL`), `P` (`PAUSE`), `R` (`RESTART`).
+  - **Gamepad**: D-Pad and analog sticks with deadzone, `A` (`CONFIRM`), `B` (`CANCEL`), `Start` (`PAUSE`), `X`/`Y` (`RESTART`), plus `dual-rumble` vibration on scoring and game over.
+  - **Mouse / Pointer**: Automatic `ControlNode` hit-testing across `DPadControl` buttons, HUD action buttons (`MENU`, `PAUSE`, `RESTART`), `MenuActionItemControl` rows, and `ChoicePillControl` options.

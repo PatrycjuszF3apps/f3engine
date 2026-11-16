@@ -1,6 +1,6 @@
-# Architecture — Engine, Debug Bar, Demos & HTML5 Launcher
+# Architecture — Engine, Node Graph, UI Kits, Debug Bar & Demos
 
-**f3engine** implements a **Virtual Viewport (2D Machine Emulator)** architecture: all game graphics, boards, 1-bit pixel-mask fonts, HUD panels, menus, and virtual controls are rasterized onto a virtual pixel grid with a declared resolution, aspect ratio, and indexed color palette.
+**f3engine** implements a **Virtual Viewport (2D Machine Emulator)** combined with a **Hierarchical Application Node & Control Graph**: all application visuals, game boards, 1-bit pixel-mask fonts, HUD panels, modal dialogs, and virtual controls are organized as composable tree nodes (`Node`, `CanvasNode`, `ContainerNode`, `ControlNode`, `AppRootNode`) and rasterized onto an indexed virtual pixel grid (`VirtualFramebuffer`).
 
 ---
 
@@ -9,17 +9,17 @@
 ```mermaid
 flowchart TD
     subgraph EngineBundle["Bundle: engine-*.js (engine/)"]
-        VER["version.ts\n(ENGINE_VERSION v1.1.0, AppManifest, checkEngineVersion)"]
+        VER["version.ts\n(ENGINE_VERSION v1.2.0, AppManifest, checkEngineVersion)"]
         VP["VirtualViewport.ts\n(Virtual Grid W×H, Aspect Ratios, Stage Scaling, EngineDebugHooks)"]
         FB["VirtualSurface.ts\n(VirtualFramebuffer — Indexed Pixel Buffer)"]
         PAL["Palette.ts\n(ColorPalette — Strict Indexed Palette)"]
         FONT["VirtualFont.ts & fonts/\n(Multi-Font Registry + Built-In Defaults)"]
         FCOMP["VirtualFontCompiler.ts\n(OTB/TTF/BDF -> 1-Bit Pixel-Mask + NFD Diacritics)"]
-        UID["VirtualUIDecorator.ts\n(UI Decorator + Multi-Font Roles + Hit-Testing)"]
-        MS["MenuSystem.ts\n(Virtual Grid Menu System)"]
-        OM["OverlayManager.ts\n(Virtual Grid Ready Overlay)"]
+        UID["VirtualUIDecorator.ts\n(UI Decorator + Multi-Font Roles)"]
+        INP["input/\n(InputRouter & Normalized ControlEvents)"]
+        NODES["nodes/\n(Node, CanvasNode, ContainerNode, ControlNode, AppRootNode, NodeTreeProcessor)"]
+        UIKIT["ui/classic_v1/\n(UIKit.ClassicV1: ResponsiveAppShellNode, HeaderBarControl, ControlDeckControl, ModalDialogNode, SettingsDialogNode, ReadyPromptDialogNode, MenuListControl)"]
         RB["RendererBackend.ts\n(IRendererBackend: Canvas2D / WebGL)"]
-        GL["GameLoop.ts"]
         SS["StorageStore.ts"]
         GM["GamepadManager.ts"]
         I18N["I18nManager.ts"]
@@ -32,8 +32,11 @@ flowchart TD
         FB --> VP
         RB --> VP
         VP --> UID
-        UID --> MS
-        UID --> OM
+        GM --> INP
+        VP --> INP
+        INP --> NODES
+        UID --> NODES
+        NODES --> UIKIT
     end
 
     subgraph DebugBarBundle["Bundle: debug-bar-*.js (degub_bar/)"]
@@ -41,8 +44,9 @@ flowchart TD
     end
 
     subgraph DemosBundle["Bundle: demos-games-*.js (demos/games/)"]
-        S1["snake/\n(Classic 20×20 Snake Demo + Engine Default Fonts)"]
-        S2["snake2/\n(Snake 2: Arena Demo + Custom Game-Bundled Fonts in snake2/fonts/)"]
+        S1["snake/\n(SnakeAppRootNode extends AppRootNode, SnakeBoardNode extends CanvasNode)"]
+        S2["snake2/\n(Snake2ArenaBoardNode extends SnakeBoardNode + Custom Game-Bundled Fonts)"]
+        S1 -->|OOP Inheritance| S2
     end
 
     subgraph LauncherBundle["Bundle: launcher-*.js (demos/html5_launcher/)"]
@@ -52,8 +56,8 @@ flowchart TD
     end
 
     VP ==>|EngineDebugHooks| DT
-    UID ==>|IVirtualSurface / UI API| S1
-    UID ==>|IVirtualSurface / UI API| S2
+    UIKIT ==>|Node & UIKit.ClassicV1 API| S1
+    UIKIT ==>|Node & UIKit.ClassicV1 API| S2
     MAIN ==>|Mounts & Disposes| S1
     MAIN ==>|Mounts & Disposes| S2
     MAIN ==>|Binds Hooks| DT
@@ -76,48 +80,37 @@ flowchart TD
   - `setCursorInspectorEnabled(enabled)`
   - `resetToDefaults()` & `updatePhysicalSize()`
 
-### 2.2. Engine Versioning & Application Manifests (`engine/version.ts`)
-- The engine exports a canonical semantic version constant `ENGINE_VERSION` (`"1.1.0"`) along with `AppManifest` and `checkEngineVersion(...)`.
-- Every application/game built on **f3engine** includes a `manifest.json` conforming to `AppManifest`:
-  - `id`: Unique application identifier (e.g., `"snake"`, `"snake2"`).
-  - `name`: Display name of the application.
-  - `version`: Application semantic version (e.g., `"1.1.0"`).
-  - `engineVersion`: Target **f3engine** version the application is compatible with (supports exact `"1.1.0"`, caret `"^1.1.0"`, tilde `"~1.1.0"`, or wildcard `"1.1.x"` constraints).
-- When a game initializes `VirtualViewport({ ..., manifest })`, the viewport evaluates `checkEngineVersion(manifest, ENGINE_VERSION)` and exposes the result via `EngineDebugHooks`.
-- `DebugToolbar` (`degub_bar/`) reads `state.versionCheck` from `EngineDebugHooks` and displays a live comparison badge (`Engine v1.1.0 vs Manifest v1.1.0 (OK)`) in the toolbar header.
+### 2.2. Hierarchical Application Node Graph (`engine/nodes/`)
+- Every application running on **f3engine** is structured as a tree of `Node` instances starting at `AppRootNode` and processed by `NodeTreeProcessor`:
+  - **`Node<TProps, TState>`**: Base node with typed `props` and `state`, optional per-frame `onUpdate(dt)` and interval-driven `onTick()` hooks, lifecycle phase hooks (`HookPhase.BEFORE_UPDATE`, `AFTER_UPDATE`, `BEFORE_RENDER`, `AFTER_RENDER`), and cascading parent authority over children (`show`, `hide`, `enable`, `disable`, `freeze`, `unfreeze`, `resetState`, `unload`, `destroy`).
+  - **`CanvasNode<TProps, TState>`**: Spatial 2D node on the virtual pixel grid (`VirtualRect`) with optional isolated offscreen buffer caching (`useOwnSurface` backed by an internal `VirtualFramebuffer`).
+  - **`ContainerNode<TProps, TState>`**: Layout container (`onLayout(bounds)`) providing batch child state operations (`freezeChildren`, `hideChildren`, `activateOnlyChild`).
+  - **`ControlNode<TProps, TState>`**: Interactive UI control supporting pointer hit-testing (`hover` / `click`), focus states, cursor styling, and `modal = true` input barriers.
+  - **`AppRootNode<TProps, TState>`**: Root container connecting `VirtualViewport`, `VirtualUIDecorator`, `InputRouter`, and `NodeTreeProcessor`.
 
-### 2.3. Virtual Pixel Grid & Aspect Ratio Presets (`VirtualViewport`)
-- The virtual pixel grid (`virtualWidth × virtualHeight`) is completely independent of the physical display resolution.
-- Built-in aspect ratio presets (`ViewportAspectRatio`):
-  - `'4:3-portrait'` (`3:4`, default for Snake demos: `300×400` virtual pixels)
-  - `'4:3-horizontal'` (`4:3`)
-  - `'16:9-portrait'` (`9:16`)
-  - `'16:9-horizontal'` (`16:9`)
-  - `'custom'` (arbitrary `W × H` dimensions)
+### 2.3. Normalized Input Abstraction (`engine/input/`)
+- Applications and UI controls do not attach low-level DOM keyboard or gamepad listeners. Instead, `InputRouter` aggregates:
+  1. Keyboard input (`Arrow*`, `WASD`, `Enter`, `Space`, `Escape`, `Backspace`, `KeyP`, `KeyR`, `Tab`)
+  2. `GamepadManager` input (D-Pad, analog sticks with deadzone, action buttons, and connection status)
+  3. `VirtualViewport` pointer coordinates (`MOVE`, `CLICK`, `LEAVE` in virtual pixels `vx, vy`)
+  4. Synthetic virtual control triggers (such as clicking the on-screen `DPadControl`)
+- `InputRouter` emits normalized `ControlEvent` instances (`DirectionControlEvent`, `ActionControlEvent`, `PointerControlEvent`, `GamepadStatusControlEvent`, `RawKeyControlEvent`) into `NodeTreeProcessor`.
+- `NodeTreeProcessor` routes events top-down in reverse child order (top-most rendered layer first). Any node can call `event.consume()` to stop propagation, and any visible `ControlNode` with `modal = true` acts as an automatic barrier preventing input from leaking to background nodes.
 
-### 2.4. Multi-Font Pixel-Mask Pipeline & National Character Support (`VirtualFont` & `VirtualFontCompiler`)
-- Text rendering never invokes browser `ctx.fillText(...)` at runtime. Instead, fonts are compiled ahead-of-time into `VirtualFontSpec` 1-bit pixel masks (`'1'` = active virtual pixel, `'0'` = transparent) and plotted directly into `VirtualFramebuffer` (`Uint8Array`) via `PixelPlotter.setPixel(x, y, color)`.
-- This guarantees 100% identical typography across **Canvas 2D** and **WebGL** backends, strict adherence to `ColorPalette`, and zero OS subpixel anti-aliasing artifacts.
-- **Multilingual Compilation (`engine/VirtualFontCompiler.ts` & `scripts/compile-font.ts`)**:
-  - Compiles SFNT OpenType/TrueType Bitmap fonts (`.otb`, `.ttf` with `EBLC`/`EBDT`) and Bitmap Distribution Format (`.bdf`) files.
-  - Includes built-in character presets (`CHARSET_PRESETS`) for `ascii`/`en`, Polish (`pl`), German (`de`), Czech (`cs`), Finnish (`fi`), `latin-ext`, and engine UI icons (`ui`).
-  - Automatically synthesizes missing national characters via Unicode `NFD` decomposition (`synthesizeNationalGlyph`) and validates 100% character coverage against `locales/*.json` (`validateFontLocaleCoverage`).
-- **Simultaneous Multi-Font Rendering & Delivery Models**:
-  - `VirtualUIDecorator` supports distinct font roles (`bodyFont` for compact HUD badges, buttons, and wrapped text; `headingFont` for titles, menu headings, and scoreboard values) and per-call `VirtualTextOptions.font` overrides.
-  - **Engine Default Fonts (`engine/fonts/`)**: Ships with `f3-retro-5x7`, `hp-100lx-6x8`, `ibm-bios-8x8`, and `ibm-cgathin-8x8`. Demonstrated by **Snake (Classic)** (`ibm-bios-8x8` + `hp-100lx-6x8`).
-  - **Game-Bundled Third-Party Fonts (`demos/games/snake2/fonts/`)**: Games can bundle custom compiled font specs in their own directory and register them via `VirtualFont.registerFont(...)`. Demonstrated by **Snake 2: Arena** (`amstrad-pc-8x8` + `ati-smallw-6x8`).
+### 2.4. Versioned UI Control Kits (`UIKit.ClassicV1` in `engine/ui/classic_v1/`)
+- Built-in controls are encapsulated inside versioned namespaces (`UIKit.ClassicV1`) so future control collections can be introduced alongside existing ones while preserving backward compatibility.
+- Higher-level composite controls manage the states, highlighting, focus, and layout of their child controls automatically:
+  - `ResponsiveAppShellNode` – Orchestrates `HeaderBarControl`, the main application `CanvasNode` slot, `ControlDeckControl`, and the `modalLayer` container across Portrait and Horizontal aspect ratios.
+  - `HeaderBarControl` & `ScoreCardGroupControl` – Manages brand badges, automatic gamepad connection status updates, and metric `ScoreCardControl` children.
+  - `ControlDeckControl` & `DPadControl` – Manages the 4 directional `ButtonControl` children (`▲`, `◀`, `▼`, `▶`) and action buttons (`Menu`, `Pause/Resume`, `Restart`).
+  - `ModalDialogNode` & `MenuListControl` – Manages `MenuActionItemControl` and `MenuChoiceItemControl` (with child `ChoicePillControl`s), automatic `selectedIndex` navigation, and **cascading child sub-dialogs (`openSubDialog` / `closeSubDialog`)**.
+  - `SettingsDialogNode` & `ReadyPromptDialogNode` – Ready-to-use modal dialogs for application settings and pre-start readiness prompts.
 
-### 2.5. Strict Indexed Color Palette (`ColorPalette` + `VirtualFramebuffer`)
-- Each demo declares its own `ColorPalette` definitions per video filter.
-- `VirtualFramebuffer` stores the virtual grid as a `Uint8Array` of palette indices (`virtualWidth * virtualHeight`).
-- Every virtual pixel (game entities, bitmap text, and UI panels) resolves strictly to an index in the active palette.
+### 2.5. Engine Versioning & Application Manifests (`engine/version.ts`)
+- The engine exports `ENGINE_VERSION` (`"1.2.0"`) along with `AppManifest` and `checkEngineVersion(...)`.
+- Every application built on **f3engine** includes a `manifest.json` conforming to `AppManifest` (`id`, `name`, `version`, `engineVersion`).
+- `DebugToolbar` (`degub_bar/`) reads `state.versionCheck` from `EngineDebugHooks` and displays a live comparison badge (`Engine v1.2.0 vs Manifest v1.2.0 (OK)`).
 
-### 2.6. Swappable Renderer Backends (`IRendererBackend`)
-- Game logic and UI decorators draw exclusively onto the abstract `IVirtualSurface` interface.
-- Physical presentation is handled by a hot-swappable `IRendererBackend`:
-  - `Canvas2DRendererBackend` – Converts the indexed buffer via a 32-bit ABGR LUT directly into `ImageData`.
-  - `WebGLRendererBackend` – Uploads the indexed buffer as a `LUMINANCE` texture and the palette as a `256×1 RGBA` LUT texture to a WebGL fragment shader.
-
-### 2.7. HTML5 Demo Launcher & Lifecycle Management (`demos/html5_launcher/`)
-- Every demo in `demos/games/` implements a mount function returning a `DemoSession` with a `dispose()` method that stops game loops, unbinds keyboard/gamepad listeners, and disposes the `VirtualViewport`.
-- When the user selects another demo or clicks `Reload` in the Debug Bar, the launcher disposes the active session, mounts the new demo onto `#app`, and rebinds `DebugToolbar` via `debugToolbar.bindEngine(...)`.
+### 2.6. Multi-Font Pixel-Mask Pipeline & Strict Indexed Color Palette
+- Fonts are compiled ahead-of-time into `VirtualFontSpec` 1-bit pixel masks (`VirtualFontCompiler` + `scripts/compile-font.ts`) with national character presets (`en`, `pl`, `de`, `cs`, `fi`, `latin-ext`) and Unicode `NFD` diacritic synthesis.
+- `VirtualFramebuffer` stores the virtual grid as a `Uint8Array` of palette indices (`virtualWidth * virtualHeight`), presented by either `Canvas2DRendererBackend` or `WebGLRendererBackend`.

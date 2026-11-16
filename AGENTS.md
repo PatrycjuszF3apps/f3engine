@@ -8,18 +8,19 @@ This document defines the architectural boundaries, coding standards, and verifi
 
 The repository is structured into four strictly separated layers bundled into dedicated chunks via `vite.config.ts`:
 
-1. **`engine/` (`dist/assets/engine-*.js`)** – Core 2D Virtual Viewport Engine:
+1. **`engine/` (`dist/assets/engine-*.js`)** – Core 2D Virtual Viewport & Application Node Engine:
    - **FORBIDDEN** to import anything from `degub_bar/` or `demos/`.
    - **FORBIDDEN** to query or reference any HTML/DOM context belonging to `degub_bar/`. The engine exposes `EngineDebugHooks` (`viewport.getDebugHooks()`) and remains completely blind to any surrounding debug UI.
-   - Engine modules must remain reusable across any 2D HTML5 game or demo (e.g., Snake, Tetris, Breakout, Pong).
+   - **Application-Oriented Naming**: Core engine nodes (`engine/nodes/`), input routing (`engine/input/`), and UI kits (`engine/ui/`) use general application terminology (`AppRootNode`, `Node`, `CanvasNode`, `ContainerNode`, `ControlNode`, `InputRouter`, `UIKit.ClassicV1`) rather than coupling to a specific game genre.
+   - Engine modules must remain reusable across any 2D HTML5 application or game (e.g., Snake, Tetris, Breakout, RPG UI systems).
 
 2. **`degub_bar/` (`dist/assets/debug-bar-*.js`)** – Standalone HTML Debug Bar:
    - Communicates with the engine exclusively through the `EngineDebugHooks` interface exported by `engine/`.
    - Displays live Engine version vs. Application Manifest target Engine version (`state.versionCheck`) and provides live controls for aspect ratio, virtual grid dimensions, window scale, UI scale, renderer backend (`Canvas 2D` / `WebGL`), palette inspection, virtual cursor coordinates, and demo switching/resetting.
 
-3. **`demos/games/` (`dist/assets/demos-games-*.js`)** – Playable Demo Games:
-   - `demos/games/snake/` – Classic 20×20 Snake demo (`manifest.json`).
-   - `demos/games/snake2/` – Snake 2: Arena demo with obstacle pillars and dual targets (`manifest.json`).
+3. **`demos/games/` (`dist/assets/demos-games-*.js`)** – Playable Demo Applications:
+   - `demos/games/snake/` – Classic 20×20 Snake demo (`manifest.json`), built by extending `AppRootNode` (`SnakeAppRootNode`) and `CanvasNode` (`SnakeBoardNode`) with `UIKit.ClassicV1` controls.
+   - `demos/games/snake2/` – Snake 2: Arena demo (`manifest.json`), built via OOP inheritance (`Snake2ArenaBoardNode extends SnakeBoardNode`) with obstacle pillars, dual targets, and custom game-bundled fonts.
    - Each demo provides an `AppManifest` declaring the compatible `engineVersion` and exports a mount function returning a `DemoSession` (`id`, `name`, `manifest`, `hooks`, `i18n`, `dispose()`).
 
 4. **`demos/html5_launcher/` (`dist/assets/launcher-*.js`)** – HTML5 Demo Wrapper Application:
@@ -45,9 +46,10 @@ The repository is structured into four strictly separated layers bundled into de
 2. **Strict Typing**: `tsconfig.json` enforces `"strict": true`, `"noUnusedLocals": true`, and `"noUnusedParameters": true`. Every change must pass `npm run build` with zero warnings or errors.
 3. **English-Only Code & Docs**: All Markdown documentation, code comments, JSDoc blocks, and identifiers must be written in English.
 4. **Palette & Filter Consistency**: Every entity drawn onto `IVirtualSurface` must use semantic color tokens from `ColorPalette` and respect `palette.pixelated` (for the `Old Nokia` mode).
-5. **Multi-Modal Input**: All interactive screens and menus must support keyboard (`Arrows`, `WASD`, `Enter`, `Escape`), gamepad, and mouse (`hover` + `click`).
-6. **No Hardcoded UI Strings**: Always route user-facing text through `I18nManager.t(...)` and keep translations in JSON locale files (`locales/en.json`, `locales/pl.json`).
-7. **Privacy & Public Repo Hygiene**: Never commit machine-specific paths, environment details, or local agent scratch files to documentation or source files.
+5. **High-Level Nodes & Normalized Input**: Applications should extend `AppRootNode` / `CanvasNode` / `ControlNode`, compose higher-level controls from versioned namespaces (`UIKit.ClassicV1`), and consume normalized `ControlEvent` instances (`DIRECTION`, `ACTION`, `POINTER`) dispatched down the node tree rather than attaching ad-hoc DOM keyboard/gamepad listeners.
+6. **Multi-Modal Input**: All interactive screens and menus must support keyboard (`Arrows`, `WASD`, `Enter`, `Escape`), gamepad, and mouse (`hover` + `click`).
+7. **No Hardcoded UI Strings**: Always route user-facing text through `I18nManager.t(...)` and keep translations in JSON locale files (`locales/en.json`, `locales/pl.json`).
+8. **Privacy & Public Repo Hygiene**: Never commit machine-specific paths, environment details, or local agent scratch files to documentation or source files.
 
 ---
 
@@ -64,7 +66,7 @@ After modifying rendering logic, UI layouts, or CSS styles:
 ## 5. Documentation Map
 
 - [`README.md`](./README.md) – Repository overview, directory layout, and quick start guide.
-- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) – Detailed multi-bundle architecture, `EngineDebugHooks` contract, and rendering pipeline.
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) – Detailed multi-bundle architecture, Node & Control graph, Normalized Input Router, `UIKit.ClassicV1` namespace, `EngineDebugHooks` contract, and rendering pipeline.
 - [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) – Architectural Decision Records (ADR) logging design choices and trade-offs.
 - [`docs/GDD.md`](./docs/GDD.md) – Game Design Document for the included Snake demos.
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) – Completed milestones and backlog for future engine/demo iterations.

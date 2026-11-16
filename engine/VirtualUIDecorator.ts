@@ -532,6 +532,7 @@ export class VirtualUIDecorator {
   }
 
   private handlePointerMove(vx: number, vy: number): void {
+    if (this.hitRegions.length === 0) return;
     const region = this.findTargetRegion(vx, vy);
     const nextId = region?.id ?? null;
 
@@ -545,6 +546,7 @@ export class VirtualUIDecorator {
   }
 
   private handlePointerClick(vx: number, vy: number): void {
+    if (this.hitRegions.length === 0) return;
     const region = this.findTargetRegion(vx, vy);
     if (region?.onClick) {
       region.onClick();

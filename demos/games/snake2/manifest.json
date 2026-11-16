@@ -1,7 +1,7 @@
 {
   "id": "snake2",
   "name": "Snake 2: Arena",
-  "version": "1.1.0",
-  "engineVersion": "1.1.0",
-  "description": "Arena variant with obstacle pillars and dual targets."
+  "version": "1.2.0",
+  "engineVersion": "1.2.0",
+  "description": "Arena variant with obstacle pillars and dual targets built on the f3engine Node & UIKit.ClassicV1 architecture."
 }
