@@ -39,6 +39,8 @@ Thumbs.db
 Desktop.ini
 
 # AI / Agent local scratch & session artifacts
+.local/
+local/
 .gemini/
 .agent/
 .claude/
