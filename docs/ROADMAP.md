@@ -25,6 +25,22 @@ This document serves as an **open, non-chronological Idea Map** for **f3engine**
      - Consuming normalized `ControlEvent` instances (`DIRECTION`, `ACTION`, `POINTER`, `GAMEPAD_STATUS`, `RAW_KEY`) from `InputRouter`.
      - Using `I18nManager` and compiling custom bitmap fonts (`VirtualFontSpec` via `npm run compile-font`).
 
+### [Idea] Sandboxed Application Custom Debug Controls API (`EngineDebugHooks` & `degub_bar/`)
+- **Goal**: Allow applications and games built on `f3engine` to expose custom, domain-specific debug controls and live telemetry inside a dedicated section of `degub_bar/` (e.g., a slider in **Snake** to artificially adjust snake length in real time, toggle invincibility, or spawn bonus apples) while guaranteeing that an application can **never** break `degub_bar/` layout, inject raw DOM/CSS, or violate layer isolation.
+- **Core Architectural Guardrails & Requirements**:
+  1. **Strict Zero-DOM Declarative Descriptor API in `engine/`**:
+     - Applications are **forbidden** from passing raw `HTMLElement` instances, HTML strings, or CSS styles across `EngineDebugHooks`.
+     - Instead, `engine/` exports a constrained set of strongly-typed debug control descriptor classes (`DebugRangeControl`, `DebugToggleControl`, `DebugSelectControl`, `DebugButtonControl`, `DebugReadonlyMetric`) registered via a builder/schema API on `AppRootNode` or `VirtualViewport` (e.g., `appRoot.registerDebugControls(builder)`).
+  2. **Constrained Rendering & Fault Isolation in `degub_bar/`**:
+     - `DebugToolbar` (`degub_bar/`) consumes the pure descriptors from `EngineDebugHooks` and renders them exclusively inside an isolated **"App Debug"** panel/section using `degub_bar`'s own internal DOM factories and scoped styles.
+     - **Input Sanitization & Bounds Clamping**: Numeric sliders (`DebugRangeControl`) enforce strict finite `min`/`max`/`step` clamping, labels are length-capped and escaped via `textContent`, and control counts are bounded so a misconfigured application cannot overflow or distort the debug toolbar.
+     - **Callback Exception Boundary**: Every application `onChange` / `onTrigger` handler invoked from `degub_bar/` is wrapped in a `try / catch` fault barrier so errors in application debug logic are logged cleanly without crashing `DebugToolbar` or the engine frame loop.
+  3. **Lifecycle Cleanup & Production Stripping**:
+     - Disposing an application session (`session.dispose()`) automatically unregisters all custom app debug controls.
+     - In production builds (where `degub_bar/` and `EngineDebugHooks` are stripped), registering app debug controls compiles to a safe no-op.
+  4. **Developer Documentation**:
+     - Document the `AppDebugControls` API and allowed control classes in the Developer Guide with a reference implementation in `demos/games/snake/` (e.g., live snake length slider, tick speed override, and instant target spawner).
+
 ---
 
 ## 2. Build Pipeline, Security & Production Packaging
