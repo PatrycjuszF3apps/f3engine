@@ -18,10 +18,10 @@ The repository is structured into four strictly separated layers bundled into de
    - Communicates with the engine exclusively through the `EngineDebugHooks` interface exported by `engine/`.
    - Displays live Engine version vs. Application Manifest target Engine version (`state.versionCheck`) and provides live controls for aspect ratio, virtual grid dimensions, window scale, UI scale, renderer backend (`Canvas 2D` / `WebGL`), palette inspection, virtual cursor coordinates, and demo switching/resetting.
 
-3. **`demos/games/` (`dist/assets/demos-games-*.js`)** – Playable Demo Applications:
-   - `demos/games/snake/` – Classic 20×20 Snake demo (`manifest.json`), built by extending `AppRootNode` (`SnakeAppRootNode`) and `CanvasNode` (`SnakeBoardNode`) with `UIKit.ClassicV1` controls.
-   - `demos/games/snake2/` – Snake 2: Arena demo (`manifest.json`), built via OOP inheritance (`Snake2ArenaBoardNode extends SnakeBoardNode`) with obstacle pillars, dual targets, and custom game-bundled fonts.
-   - Each demo provides an `AppManifest` declaring the compatible `engineVersion` and exports a mount function returning a `DemoSession` (`id`, `name`, `manifest`, `hooks`, `i18n`, `dispose()`).
+3. **`demos/games/` (`dist/assets/demos-games-*.js`)** – Self-Contained Reference Demo Applications:
+   - **Self-Contained Application Blueprint**: Every demo folder under `demos/games/<app-id>/` is structured to closely mirror a real standalone application built on **f3engine**. Each application directory encapsulates its own `manifest.json` (`AppManifest`), application documentation & Game Design Document (`README.md`), localization assets (`locales/*.json`), optional compiled assets (`fonts/`), `AppRootNode` / `CanvasNode` classes, and an `index.ts` entrypoint returning a `DemoSession` (`id`, `name`, `manifest`, `hooks`, `i18n`, `dispose()`). Game-specific GDDs and docs must live inside the corresponding demo directory (`demos/games/<app-id>/README.md`), never inside engine `docs/`.
+   - `demos/games/snake/` – Classic 20×20 Snake reference application (`manifest.json`, `README.md`, `locales/`), built by extending `AppRootNode` (`SnakeAppRootNode`) and `CanvasNode` (`SnakeBoardNode`) with `UIKit.ClassicV1` controls.
+   - `demos/games/snake2/` – Snake 2: Arena reference application (`manifest.json`, `README.md`, `fonts/`), built via OOP inheritance (`Snake2ArenaBoardNode extends SnakeBoardNode`) with obstacle pillars, dual targets, and custom game-bundled fonts.
 
 4. **`demos/html5_launcher/` (`dist/assets/launcher-*.js`)** – HTML5 Demo Wrapper Application:
    - Initializes the viewport stage, mounts the active demo from `demoRegistry.ts`, and binds `DebugToolbar`.
@@ -66,7 +66,8 @@ After modifying rendering logic, UI layouts, or CSS styles:
 ## 5. Documentation Map
 
 - [`README.md`](./README.md) – Repository overview, directory layout, and quick start guide.
-- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) – Detailed multi-bundle architecture, Node & Control graph, Normalized Input Router, `UIKit.ClassicV1` namespace, `EngineDebugHooks` contract, and rendering pipeline.
-- [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) – Architectural Decision Records (ADR) logging design choices and trade-offs.
-- [`docs/GDD.md`](./docs/GDD.md) – Game Design Document for the included Snake demos.
-- [`docs/ROADMAP.md`](./docs/ROADMAP.md) – Completed milestones and backlog for future engine/demo iterations.
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) – Detailed multi-bundle architecture, Node & Control graph, Normalized Input Router, `UIKit.ClassicV1` namespace, `EngineDebugHooks` contract, self-contained application blueprint, and rendering pipeline.
+- [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) – Architectural Decision Records (ADR) logging foundational design choices and trade-offs.
+- [`docs/ROADMAP.md`](./docs/ROADMAP.md) – Non-linear idea map for engine spatial/board sub-modules, visual effects, physics, and DX enhancements.
+- [`demos/games/snake/README.md`](./demos/games/snake/README.md) – Reference application guide & Game Design Document (GDD) for **Snake (Classic)**.
+- [`demos/games/snake2/README.md`](./demos/games/snake2/README.md) – Reference OOP extension guide & Game Design Document (GDD) for **Snake 2: Arena**.

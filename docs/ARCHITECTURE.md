@@ -114,3 +114,13 @@ flowchart TD
 ### 2.6. Multi-Font Pixel-Mask Pipeline & Strict Indexed Color Palette
 - Fonts are compiled ahead-of-time into `VirtualFontSpec` 1-bit pixel masks (`VirtualFontCompiler` + `scripts/compile-font.ts`) with national character presets (`en`, `pl`, `de`, `cs`, `fi`, `latin-ext`) and Unicode `NFD` diacritic synthesis.
 - `VirtualFramebuffer` stores the virtual grid as a `Uint8Array` of palette indices (`virtualWidth * virtualHeight`), presented by either `Canvas2DRendererBackend` or `WebGLRendererBackend`.
+
+### 2.7. Self-Contained Application Directory Blueprint (`demos/games/<app-id>/`)
+- Every demo directory under `demos/games/` is intentionally structured to mirror a **real standalone application project** built on top of **f3engine**.
+- Engine documentation in root `docs/` stays strictly dedicated to engine architecture, ADRs, and engine sub-module ideas, whereas each application owns its complete domain package inside its own directory:
+  - `manifest.json` – `AppManifest` declaring application `id`, `name`, `version`, and target `engineVersion`.
+  - `README.md` – Co-located application architecture overview and Game Design Document (GDD).
+  - `index.ts` – Application bootstrap mounting `VirtualViewport`, `VirtualUIDecorator`, and the root `AppRootNode` subclass, returning a clean `DemoSession` (`dispose()`).
+  - `locales/*.json` & `i18n.ts` – Application-specific translation dictionaries passed to `I18nManager`.
+  - `fonts/` *(optional)* – Application-bundled `VirtualFontSpec` bitmap fonts compiled via `npm run compile-font`.
+  - `*AppRootNode.ts` / `*BoardNode.ts` – Domain classes extending `AppRootNode` and `CanvasNode` (or extending another application's board node via OOP inheritance, as in `Snake2ArenaBoardNode extends SnakeBoardNode`).

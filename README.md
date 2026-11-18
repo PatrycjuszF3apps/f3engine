@@ -16,17 +16,16 @@ f3engine/
 │       └── classic_v1/     # Namespaced UIKit.ClassicV1 control library (ResponsiveAppShellNode, HeaderBarControl, ControlDeckControl, ModalDialogNode, SettingsDialogNode, ReadyPromptDialogNode, MenuListControl, DPadControl, etc.)
 ├── degub_bar/              # Standalone HTML Debug Bar consuming EngineDebugHooks
 ├── demos/
-│   ├── games/
-│   │   ├── snake/          # Demo 1: Classic 20×20 Arcade Snake (extends AppRootNode & CanvasNode + UIKit.ClassicV1)
-│   │   └── snake2/         # Demo 2: Snake 2: Arena (OOP extension Snake2ArenaBoardNode extends SnakeBoardNode + custom fonts)
+│   ├── games/              # Self-contained reference applications (each with manifest.json, README.md/GDD, locales/fonts)
+│   │   ├── snake/          # Demo 1: Classic 20×20 Arcade Snake (AppRootNode + CanvasNode + UIKit.ClassicV1 + README.md)
+│   │   └── snake2/         # Demo 2: Snake 2: Arena (OOP extension Snake2ArenaBoardNode + custom fonts + README.md)
 │   └── html5_launcher/     # HTML5 wrapper app initializing the canvas, debug bar, and demo switcher
 ├── scripts/
 │   └── compile-font.ts     # CLI compiler converting .otb/.ttf/.bdf fonts to 1-bit pixel masks with national locales
 └── docs/
     ├── ARCHITECTURE.md     # Multi-bundle architecture, Node & Control graph, InputRouter, versioning & font pipeline
-    ├── DECISION_LOG.md     # Architectural Decision Records (ADR)
-    ├── GDD.md              # Game Design Document for the Snake demos
-    └── ROADMAP.md          # Project roadmap and upcoming features
+    ├── DECISION_LOG.md     # Architectural Decision Records (ADR-001 through ADR-006)
+    └── ROADMAP.md          # Non-linear idea map for engine sub-modules, visual effects, physics & DX
 ```
 
 ---
