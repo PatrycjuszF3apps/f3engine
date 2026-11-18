@@ -43,6 +43,7 @@ Desktop.ini
 local/
 .gemini/
 .agent/
+.agents/
 .claude/
 scratch/
 *.tmp

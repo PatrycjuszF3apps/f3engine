@@ -2,6 +2,8 @@
 
 This document defines the architectural boundaries, coding standards, and verification workflows for AI agents contributing to **f3engine**.
 
+> **Local Developer Overrides (`.local/`)**: If `.local/AGENTS.md` or `.local/rules/*.md` exists in the local workspace, its instructions carry the **highest priority** and override any conflicting defaults in this document (covering local environment setup, private testing rules, and machine-specific workflows). Never commit, quote, or reference `.local/` files in tracked repository files.
+
 ---
 
 ## 1. Project Philosophy & Layer Separation
