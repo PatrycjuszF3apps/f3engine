@@ -1,8 +1,8 @@
-# AGENTS.md — AI Agent Instructions (Vibecoding Standard)
+# AGENTS.md — AI Agent Instructions (Open-Source Standard)
 
-This document defines the architectural boundaries, coding standards, and verification workflows for AI agents contributing to **f3engine**.
+This document defines the architectural boundaries, coding standards, and verification workflows for AI agents and contributors working on **f3engine** across any operating system (Linux, macOS, Windows) and agentic environment.
 
-> **Local Developer Overrides (`.local/`)**: If `.local/AGENTS.md` or `.local/rules/*.md` exists in the local workspace, its instructions carry the **highest priority** and override any conflicting defaults in this document (covering local environment setup, private testing rules, and machine-specific workflows). Never commit, quote, or reference `.local/` files in tracked repository files.
+> **Local Developer Overrides (`.local/`)**: If `.local/AGENTS.md` or `.local/rules/*.md` exists in the local workspace, its instructions carry the **highest priority** and override any defaults in this document (covering machine-specific tooling, local browser automation, and private testing workflows). Never commit, quote, or reference `.local/` files in tracked repository files.
 
 ---
 
@@ -19,26 +19,26 @@ The repository is structured into four strictly separated layers bundled into de
      - `engine/l3_interaction/` (`L3_INTERACTION`) – Layer grouping/elevation (`ILayerElevationService`), `VirtualUIDecorator`, `I18nManager`, and versioned UI kits (`engine/l3_interaction/ui/classic_v1/`).
      - `engine/l4_domain/` (`L4_DOMAIN`) – Reusable domain policy contracts (`IDomainDepthPolicyService`).
    - **Application-Oriented Naming**: Core engine nodes (`engine/l2_runtime/nodes/`), input routing (`engine/l2_runtime/input/`), and UI kits (`engine/l3_interaction/ui/`) use general application terminology (`AppRootNode`, `Node`, `CanvasNode`, `ContainerNode`, `ControlNode`, `InputRouter`, `UIKit.ClassicV1`) rather than coupling to a specific game genre.
-   - Engine modules must remain reusable across any 2D HTML5 application or game (e.g., Snake, Tetris, Breakout, multi-layer compositors, RPG UI systems).
+   - Engine modules must remain reusable across any 2D HTML5 application or game.
 
 2. **`degub_bar/` (`dist/assets/debug-bar-*.js`)** – Standalone HTML Debug Bar:
    - Communicates with the engine exclusively through the `EngineDebugHooks` interface exported by `engine/`.
    - Displays live Engine version vs. Application Manifest target Engine version (`state.versionCheck`), live hardware renderer context (`state.rendererRuntimeInfo`: `CanvasRenderingContext2D` vs. `WebGLRenderingContext`), and provides live controls for aspect ratio, virtual grid dimensions, window scale, UI scale, renderer backend (`Canvas 2D` / `WebGL`), palette inspection, virtual cursor coordinates, and demo switching/resetting.
 
-3. **`demos/games/` (`dist/assets/demos-games-*.js`)** – Self-Contained Reference Demo Applications:
-   - **Self-Contained 4-Layer Application Blueprint**: Every demo folder under `demos/games/<app-id>/` mirrors a real standalone application built on **f3engine** using the exact same 4-layer DDD directory structure (`l1_infrastructure/`, `l2_runtime/`, `l3_interaction/`, `l4_domain/`). Each application directory encapsulates its own `manifest.json` (`AppManifest`), application documentation & Game Design Document (`README.md`), localization assets (`locales/*.json`), optional compiled assets (`fonts/`), pure services paired with `*.registrar.ts` shadow registrars, `AppRootNode` / `CanvasNode` classes, and an `index.ts` entrypoint returning a `DemoSession` (`id`, `name`, `manifest`, `hooks`, `i18n`, `dispose()`). Game-specific GDDs and docs must live inside the corresponding demo directory (`demos/games/<app-id>/README.md`), never inside engine `docs/`.
-   - `demos/games/snake/` – Classic 20×20 Snake reference application (`manifest.json`, `README.md`, `locales/`, `l1_infrastructure/`..`l4_domain/`), built on the 4-layer DDD service architecture with `*.registrar.ts` shadow registrars.
-   - `demos/games/layers/` – Layer Stack: Realtime Z-Index reference application (`manifest.json`, `README.md`, `locales/`, `l1_infrastructure/`..`l4_domain/`), demonstrating 5 independent animated `AnimatedBackdropNode` instances inside `LayeredStageContainerNode extends ContainerNode` with real-time Z-index sorting injected via custom application service registrars.
+3. **`demos/games/*` (`dist/assets/demos-games-*.js`)** – Self-Contained Reference Demo Applications:
+   - **Self-Contained 4-Layer Application Blueprint**: Every demo directory under `demos/games/<app-id>/` mirrors a standalone application built on **f3engine** using the exact same 4-layer DDD directory structure (`l1_infrastructure/`, `l2_runtime/`, `l3_interaction/`, `l4_domain/`).
+   - Each application directory encapsulates its own `manifest.json` (`AppManifest`), co-located application documentation & Game Design Document (`README.md`), localization assets (`locales/*.json`), optional compiled assets (`fonts/`), pure services paired with `*.registrar.ts` shadow registrars, `AppRootNode` / `CanvasNode` / `ContainerNode` classes, and an `index.ts` entrypoint returning a `DemoSession` (`id`, `name`, `manifest`, `hooks`, `i18n`, `dispose()`).
+   - Game-specific GDDs and docs must always live inside the corresponding demo directory (`demos/games/<app-id>/README.md`), never inside engine `docs/`.
 
 4. **`demos/html5_launcher/` (`dist/assets/launcher-*.js`)** – HTML5 Demo Wrapper Application:
-   - Initializes the viewport stage, mounts the active demo from `demoRegistry.ts`, and binds `DebugToolbar`.
-   - Handles switching between demos and resetting the engine cleanly via `session.dispose()`.
+   - Initializes the viewport stage, mounts the active demo from `demoRegistry.ts` (`DEMO_CATALOG`), and binds `DebugToolbar`.
+   - Handles switching between any registered demos and resetting the engine cleanly via `session.dispose()`.
 
 ---
 
 ## 2. Tech Stack & Commands
 
-- **Environment**: Node.js `v20+`, Vite `6+`, TypeScript `5.7+` (strict mode), pure HTML5 Canvas / WebGL + CSS3 (zero external runtime UI frameworks).
+- **Environment**: Cross-platform (Linux, macOS, Windows), Node.js `v20+`, Vite `6+`, TypeScript `5.7+` (strict mode), pure HTML5 Canvas / WebGL + CSS3 (zero external runtime UI frameworks).
 - **Commands**:
   - `npm run dev` – Starts the Vite development server (`http://localhost:5173/`).
   - `npm run build` – Runs full TypeScript typechecking (`tsc`) and builds production bundles into `dist/`.
@@ -61,13 +61,13 @@ The repository is structured into four strictly separated layers bundled into de
 
 ---
 
-## 4. Visual Verification Workflow (Chrome DevTools / MCP)
+## 4. Build & Visual Verification Workflow
 
-After modifying rendering logic, UI layouts, or CSS styles:
-1. Ensure the Vite dev server is running (`http://localhost:5173/`).
-2. Connect to the local browser instance via Chrome DevTools MCP.
-3. Bring the page to the front before capturing screenshots to avoid background `requestAnimationFrame` throttling.
-4. Verify zero console or runtime errors and inspect visual rendering across video filters (`none`, `crt`, `nokia`), renderer backends (`canvas2d`, `webgl`), and demo switches (`snake` ↔ `layers`).
+After modifying rendering logic, UI layouts, services, or CSS styles:
+1. Run `npm run build` to verify strict TypeScript compilation and Rollup bundle isolation.
+2. Start the development server (`npm run dev`, default `http://localhost:5173/`) and inspect the application in a browser (manually or using any browser automation / DevTools integration available in your environment).
+3. When capturing screenshots or running automated browser checks, keep the page tab focused/active to avoid background `requestAnimationFrame` throttling.
+4. Verify zero console or runtime errors and inspect visual rendering across video filters (`none`, `crt`, `nokia`), renderer backends (`canvas2d`, `webgl`), aspect ratios (`portrait`, `horizontal`), and demo switching across all entries in `demos/html5_launcher/demoRegistry.ts`.
 
 ---
 
@@ -77,5 +77,4 @@ After modifying rendering logic, UI layouts, or CSS styles:
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) – Detailed multi-bundle architecture, 4-layer DDD lifecycle & per-layer DI (`EngineKernel`, `*.registrar.ts`), Node & Control graph, Normalized Input Router, `UIKit.ClassicV1` namespace, `EngineDebugHooks` contract, and rendering pipeline.
 - [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) – Architectural Decision Records (`ADR-001` through `ADR-007`) logging foundational design choices and trade-offs.
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) – Non-linear idea map for engine spatial/board sub-modules, visual effects, physics, and DX enhancements.
-- [`demos/games/snake/README.md`](./demos/games/snake/README.md) – Reference application guide & Game Design Document (GDD) for **Snake (Classic)**.
-- [`demos/games/layers/README.md`](./demos/games/layers/README.md) – Reference multi-node layering & real-time Z-Index sorting guide for **Layer Stack: Realtime Z-Index**.
+- `demos/games/*/README.md` – Co-located application architecture guides and Game Design Documents (GDDs) for each self-contained reference demo registered in [`demos/html5_launcher/demoRegistry.ts`](./demos/html5_launcher/demoRegistry.ts).
