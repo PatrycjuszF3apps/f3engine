@@ -8,22 +8,22 @@
 
 ```text
 f3engine/
-├── engine/                 # Core 2D engine (versioned via version.ts; agnostic of games & debug bar DOM)
-│   ├── fonts/              # Built-in default compiled pixel-mask fonts (HP 100LX 6×8, IBM BIOS 8×8, IBM CGA Thin 8×8)
-│   ├── input/              # Normalized input abstraction (InputRouter, Direction/Action/Pointer ControlEvents)
-│   ├── nodes/              # Hierarchical application Node graph (Node, CanvasNode, ContainerNode, ControlNode, AppRootNode, NodeTreeProcessor)
-│   └── ui/
-│       └── classic_v1/     # Namespaced UIKit.ClassicV1 control library (ResponsiveAppShellNode, HeaderBarControl, ControlDeckControl, ModalDialogNode, SettingsDialogNode, ReadyPromptDialogNode, MenuListControl, DPadControl, etc.)
+├── engine/                 # Core 2D engine structured into 4 DDD lifecycle layers + per-layer DI
+│   ├── di/                 # EngineKernel, LayerServiceRegistry<'L1'..'L4'>, Shadow ServiceRegistrar (*.registrar.ts)
+│   ├── l1_infrastructure/  # L1: Hardware, Platform, Palettes, Fonts, VirtualFramebuffer, RendererBackend, Viewport
+│   ├── l2_runtime/         # L2: Scene Graph Nodes, NodeMetadataService, ChildOrderService, HitTestService, InputRouter
+│   ├── l3_interaction/     # L3: LayerElevationService, VirtualUIDecorator, I18nManager, UIKit.ClassicV1
+│   └── l4_domain/          # L4: DomainDepthPolicyService & domain boundary contracts
 ├── degub_bar/              # Standalone HTML Debug Bar consuming EngineDebugHooks
 ├── demos/
-│   ├── games/              # Self-contained reference applications (each with manifest.json, README.md/GDD, locales/fonts)
-│   │   ├── snake/          # Demo 1: Classic 20×20 Arcade Snake (AppRootNode + CanvasNode + UIKit.ClassicV1 + README.md)
-│   │   └── snake2/         # Demo 2: Snake 2: Arena (OOP extension Snake2ArenaBoardNode + custom fonts + README.md)
+│   ├── games/              # Self-contained reference applications mirroring the 4-layer DDD structure
+│   │   ├── snake/          # Demo 1: Classic 20×20 Arcade Snake (l1_infrastructure..l4_domain + *.registrar.ts)
+│   │   └── layers/         # Demo 2: Layer Stack: Realtime Z-Index (5 animated backdrops + custom Z-order registrars)
 │   └── html5_launcher/     # HTML5 wrapper app initializing the canvas, debug bar, and demo switcher
 ├── scripts/
 │   └── compile-font.ts     # CLI compiler converting .otb/.ttf/.bdf fonts to 1-bit pixel masks with national locales
 └── docs/
-    ├── ARCHITECTURE.md     # Multi-bundle architecture, Node & Control graph, InputRouter, versioning & font pipeline
+    ├── ARCHITECTURE.md     # Multi-bundle architecture, 4-layer DDD DI, Node & Control graph, InputRouter & font pipeline
     ├── DECISION_LOG.md     # Architectural Decision Records (ADR-001 through ADR-006)
     └── ROADMAP.md          # Non-linear idea map for engine sub-modules, visual effects, physics & DX
 ```

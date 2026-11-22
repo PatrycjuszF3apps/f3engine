@@ -96,6 +96,23 @@ body {
   background: rgba(248, 113, 113, 0.14);
 }
 
+.debug-renderer-readout {
+  font-weight: 700;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+
+.debug-renderer-readout.is-canvas2d {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.debug-renderer-readout.is-webgl {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.65);
+  background: rgba(56, 189, 248, 0.12);
+}
+
 .debug-cursor-readout {
   min-width: 78px;
   text-align: center;

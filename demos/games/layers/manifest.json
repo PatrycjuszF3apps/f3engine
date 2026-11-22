@@ -1,0 +1,8 @@
+{
+  "id": "layers",
+  "name": "Layer Stack: Realtime Z-Index",
+  "version": "1.2.0",
+  "engineVersion": "^1.2.0",
+  "author": "f3engine Team",
+  "description": "Multi-node animated backdrops and real-time Z-Index child sorting powered by 4-layer DDD service registrars."
+}

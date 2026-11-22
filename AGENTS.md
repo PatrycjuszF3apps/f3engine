@@ -22,8 +22,8 @@ The repository is structured into four strictly separated layers bundled into de
 
 3. **`demos/games/` (`dist/assets/demos-games-*.js`)** – Self-Contained Reference Demo Applications:
    - **Self-Contained Application Blueprint**: Every demo folder under `demos/games/<app-id>/` is structured to closely mirror a real standalone application built on **f3engine**. Each application directory encapsulates its own `manifest.json` (`AppManifest`), application documentation & Game Design Document (`README.md`), localization assets (`locales/*.json`), optional compiled assets (`fonts/`), `AppRootNode` / `CanvasNode` classes, and an `index.ts` entrypoint returning a `DemoSession` (`id`, `name`, `manifest`, `hooks`, `i18n`, `dispose()`). Game-specific GDDs and docs must live inside the corresponding demo directory (`demos/games/<app-id>/README.md`), never inside engine `docs/`.
-   - `demos/games/snake/` – Classic 20×20 Snake reference application (`manifest.json`, `README.md`, `locales/`), built by extending `AppRootNode` (`SnakeAppRootNode`) and `CanvasNode` (`SnakeBoardNode`) with `UIKit.ClassicV1` controls.
-   - `demos/games/snake2/` – Snake 2: Arena reference application (`manifest.json`, `README.md`, `fonts/`), built via OOP inheritance (`Snake2ArenaBoardNode extends SnakeBoardNode`) with obstacle pillars, dual targets, and custom game-bundled fonts.
+   - `demos/games/snake/` – Classic 20×20 Snake reference application (`manifest.json`, `README.md`, `locales/`, `l1_infrastructure/`..`l4_domain/`), built on the 4-layer DDD service architecture with `*.registrar.ts` shadow registrars.
+   - `demos/games/layers/` – Layer Stack: Realtime Z-Index reference application (`manifest.json`, `README.md`, `locales/`, `l1_infrastructure/`..`l4_domain/`), demonstrating 5 independent animated `AnimatedBackdropNode` instances inside `LayeredStageContainerNode extends ContainerNode` with real-time Z-index sorting injected via custom application service registrars.
 
 4. **`demos/html5_launcher/` (`dist/assets/launcher-*.js`)** – HTML5 Demo Wrapper Application:
    - Initializes the viewport stage, mounts the active demo from `demoRegistry.ts`, and binds `DebugToolbar`.
@@ -72,4 +72,4 @@ After modifying rendering logic, UI layouts, or CSS styles:
 - [`docs/DECISION_LOG.md`](./docs/DECISION_LOG.md) – Architectural Decision Records (ADR) logging foundational design choices and trade-offs.
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md) – Non-linear idea map for engine spatial/board sub-modules, visual effects, physics, and DX enhancements.
 - [`demos/games/snake/README.md`](./demos/games/snake/README.md) – Reference application guide & Game Design Document (GDD) for **Snake (Classic)**.
-- [`demos/games/snake2/README.md`](./demos/games/snake2/README.md) – Reference OOP extension guide & Game Design Document (GDD) for **Snake 2: Arena**.
+- [`demos/games/layers/README.md`](./demos/games/layers/README.md) – Reference multi-node layering & real-time Z-Index sorting guide for **Layer Stack: Realtime Z-Index**.

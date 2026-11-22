@@ -4,8 +4,8 @@ import {
   compileBdfFont,
   compileSfntBitmapFont,
   validateFontLocaleCoverage,
-} from '../engine/VirtualFontCompiler.ts';
-import type { VirtualFontSpec } from '../engine/VirtualFont.ts';
+} from '../engine/l1_infrastructure/VirtualFontCompiler.ts';
+import type { VirtualFontSpec } from '../engine/l1_infrastructure/VirtualFont.ts';
 
 interface CliArgs {
   input: string;

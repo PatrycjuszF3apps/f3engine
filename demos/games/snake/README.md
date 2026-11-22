@@ -11,10 +11,10 @@ demos/games/snake/
 ├── README.md               # Application overview, architecture blueprint & Game Design Document (GDD)
 ├── manifest.json           # AppManifest declaring id ("snake"), app version, and target engineVersion ("1.2.0")
 ├── index.ts                # Application entrypoint exporting mountSnakeDemo(container) -> DemoSession
-├── SnakeAppRootNode.ts     # Root application controller extending AppRootNode + composing UIKit.ClassicV1
-├── SnakeBoardNode.ts       # 20×20 gameplay grid extending CanvasNode and consuming normalized ControlEvents
-├── SnakeSettings.ts        # Difficulty presets, persisted state schema, and semantic ColorPalettes
-├── i18n.ts                 # Typed I18nManager bootstrap for supported locales ('en' | 'pl')
+├── l1_infrastructure/      # L1: SnakeSettingsRepository + SnakeSettingsRepository.registrar.ts
+├── l2_runtime/             # L2: SnakeAppRootNode & SnakeBoardNode
+├── l3_interaction/         # L3: SnakeI18nService + SnakeI18nService.registrar.ts
+├── l4_domain/              # L4: SnakeSimulationService + SnakeSimulationService.registrar.ts
 └── locales/
     ├── en.json             # English UI & gameplay strings
     └── pl.json             # Polish UI & gameplay strings

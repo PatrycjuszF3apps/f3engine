@@ -9,15 +9,19 @@ import {
   VirtualUIDecorator,
   VirtualViewport,
 } from '../../../engine';
-import manifestData from './manifest.json';
-import { SnakeAppRootNode } from './SnakeAppRootNode';
 import {
   DEFAULT_SNAKE_STATE,
   SNAKE_VIEWPORT_DEFAULTS,
   SnakePersistedState,
   createSnakePalettes,
-} from './SnakeSettings';
-import { StringId, SupportedLocale, createGameI18n } from './i18n';
+} from './l1_infrastructure/SnakeSettingsRepository';
+import { SnakeAppRootNode } from './l2_runtime/SnakeAppRootNode';
+import {
+  StringId,
+  SupportedLocale,
+  createGameI18n,
+} from './l3_interaction/SnakeI18nService';
+import manifestData from './manifest.json';
 
 export const SNAKE_MANIFEST: AppManifest = manifestData;
 
@@ -33,8 +37,8 @@ export interface DemoSession {
 }
 
 /**
- * Mounts an instance of the Classic Snake demo built on the f3engine
- * `AppRootNode` + `UIKit.ClassicV1` node hierarchy.
+ * Mounts an instance of the Classic Snake demo organized around the
+ * 4-layer DDD service architecture (`l1_infrastructure`..`l4_domain`).
  */
 export function mountSnakeDemo(container: HTMLElement): DemoSession {
   const store = new StorageStore<SnakePersistedState>(
@@ -82,31 +86,47 @@ export function mountSnakeDemo(container: HTMLElement): DemoSession {
 }
 
 export {
+  SnakeSettingsRepository,
+  SNAKE_L1_TOKENS,
+  SNAKE_VIEWPORT_DEFAULTS,
+  DEFAULT_SNAKE_STATE,
+  createSnakePalettes,
+  type ISnakeSettingsRepository,
+  type SnakePersistedState,
+} from './l1_infrastructure/SnakeSettingsRepository';
+export { SnakeSettingsRepositoryRegistrar } from './l1_infrastructure/SnakeSettingsRepository.registrar';
+export {
   SnakeBoardNode,
-  type Direction,
-  type GameStatus,
-  type Point,
-  type GameStats,
   type SnakeBoardProps,
   type SnakeBoardState,
-} from './SnakeBoardNode';
+} from './l2_runtime/SnakeBoardNode';
 export {
   SnakeAppRootNode,
   type SnakeAppRootProps,
   type SnakeAppRootState,
-} from './SnakeAppRootNode';
+} from './l2_runtime/SnakeAppRootNode';
 export {
-  DIFFICULTY_PRESETS,
-  SNAKE_VIEWPORT_DEFAULTS,
-  DEFAULT_SNAKE_STATE,
-  createSnakePalettes,
-  type Difficulty,
-  type DifficultyPreset,
-  type SnakePersistedState,
-} from './SnakeSettings';
-export {
+  SnakeI18nService,
+  SNAKE_L3_TOKENS,
   LOCALE_ASSETS,
   createGameI18n,
+  type ISnakeI18nService,
   type SupportedLocale,
   type StringId,
-} from './i18n';
+} from './l3_interaction/SnakeI18nService';
+export { SnakeI18nServiceRegistrar } from './l3_interaction/SnakeI18nService.registrar';
+export {
+  SnakeSimulationService,
+  SNAKE_L4_TOKENS,
+  DIFFICULTY_PRESETS,
+  type ISnakeSimulationService,
+  type Direction,
+  type Difficulty,
+  type DifficultyPreset,
+  type GameStatus,
+  type Point,
+  type GameStats,
+  type SnakeDomainGridState,
+  type SnakeTickResult,
+} from './l4_domain/SnakeSimulationService';
+export { SnakeSimulationServiceRegistrar } from './l4_domain/SnakeSimulationService.registrar';

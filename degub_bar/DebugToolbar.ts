@@ -89,6 +89,7 @@ export class DebugToolbar<
   private cursorCoordsEl!: HTMLElement;
   private versionInfoEl!: HTMLElement;
   private physicalInfoEl!: HTMLElement;
+  private rendererInfoEl!: HTMLElement;
   private paletteSwatchesEl!: HTMLElement;
 
   constructor(config: DebugToolbarConfig<L, K>) {
@@ -191,6 +192,7 @@ export class DebugToolbar<
           <span class="debug-title">${this.t('title')}</span>
           <span id="debug-version-info" class="debug-readout debug-version-readout"></span>
           <span id="debug-physical-info" class="debug-readout"></span>
+          <span id="debug-renderer-info" class="debug-readout debug-renderer-readout"></span>
         </div>
 
         <div class="debug-controls">
@@ -355,6 +357,9 @@ export class DebugToolbar<
     this.physicalInfoEl = this.container.querySelector<HTMLElement>(
       '#debug-physical-info'
     )!;
+    this.rendererInfoEl = this.container.querySelector<HTMLElement>(
+      '#debug-renderer-info'
+    )!;
     this.paletteSwatchesEl = this.container.querySelector<HTMLElement>(
       '#debug-palette-swatches'
     )!;
@@ -503,6 +508,19 @@ export class DebugToolbar<
       pw: state.physicalWidth,
       ph: state.physicalHeight,
     });
+
+    const rt = state.rendererRuntimeInfo;
+    const fallbackSuffix = rt.isFallback ? ' • FALLBACK' : '';
+    this.rendererInfoEl.textContent = `CTX: ${rt.contextClassName} (${rt.apiVersion}${fallbackSuffix})`;
+    this.rendererInfoEl.title = `Context Class: ${rt.contextClassName} | API: ${rt.apiVersion} | Driver/Target: ${rt.hardwareRenderer} | Presented Frames: ${rt.presentedFrames}`;
+    this.rendererInfoEl.classList.toggle(
+      'is-webgl',
+      rt.activeType === 'webgl' && !rt.isFallback
+    );
+    this.rendererInfoEl.classList.toggle(
+      'is-canvas2d',
+      rt.activeType === 'canvas2d' || rt.isFallback
+    );
 
     // Refresh color swatches from the declared palette exposed in EngineDebugHooks state
     this.paletteSwatchesEl.innerHTML = state.paletteEntries
