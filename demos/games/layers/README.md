@@ -4,6 +4,10 @@
 1. Simultaneous, independent rendering of **5 animated `AnimatedBackdropNode` (`ControlNode` / `CanvasNode`) instances** mounted as children of a dedicated `LayeredStageContainerNode extends ContainerNode`.
 2. **Real-Time Z-Index & Group Sorting** injected by the application across the **4-Layer DDD Lifecycle & Shadow Service Registrar (`*.registrar.ts`)** architecture without modifying core engine defaults.
 
+| **Portrait CRT Filter (WebGL)** | **16:9 Horizontal Responsive Layout** |
+| :---: | :---: |
+| ![Layer Stack CRT WebGL](../../../docs/screenshots/layers-zstack-crt.png) | ![Layer Stack 16:9 Horizontal](../../../docs/screenshots/layers-zstack-horizontal.png) |
+
 ---
 
 ## 1. 4-Layer DDD Directory & Service Architecture

@@ -2,6 +2,10 @@
 
 **Snake (Classic)** (`demos/games/snake/`) is a complete, self-contained 2D arcade application built on **f3engine**. Its source directory is structured as a canonical blueprint for standalone applications built on the engine, bundling its own `manifest.json`, localization dictionaries (`locales/`), persistence settings, board `CanvasNode`, and root `AppRootNode`.
 
+| **Active Gameplay (WebGL)** | **Old Nokia 3310 LCD Filter (Canvas 2D)** |
+| :---: | :---: |
+| ![Snake Classic WebGL](../../../docs/screenshots/snake-classic-webgl.png) | ![Snake Old Nokia LCD Filter](../../../docs/screenshots/snake-nokia-filter.png) |
+
 ---
 
 ## 1. Application Directory Structure

@@ -4,6 +4,16 @@
 
 ---
 
+## Screenshots
+
+| **Snake (Classic) — WebGL & Debug Bar** | **Snake (Classic) — Old Nokia LCD Filter (Canvas 2D)** |
+| :---: | :---: |
+| ![Snake Classic WebGL & Debug Bar](./docs/screenshots/snake-classic-webgl.png) | ![Snake Old Nokia LCD Filter](./docs/screenshots/snake-nokia-filter.png) |
+| **Layer Stack: Realtime Z-Index — CRT Filter (WebGL)** | **Layer Stack: Realtime Z-Index — 16:9 Horizontal Layout** |
+| ![Layer Stack Realtime Z-Index CRT](./docs/screenshots/layers-zstack-crt.png) | ![Layer Stack 16:9 Horizontal](./docs/screenshots/layers-zstack-horizontal.png) |
+
+---
+
 ## Repository Structure
 
 ```text
