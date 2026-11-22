@@ -34,7 +34,7 @@ f3engine/
 │   └── compile-font.ts     # CLI compiler converting .otb/.ttf/.bdf fonts to 1-bit pixel masks with national locales
 └── docs/
     ├── ARCHITECTURE.md     # Multi-bundle architecture, 4-layer DDD DI, Node & Control graph, InputRouter & font pipeline
-    ├── DECISION_LOG.md     # Architectural Decision Records (ADR-001 through ADR-006)
+    ├── DECISION_LOG.md     # Architectural Decision Records (ADR-001 through ADR-007)
     └── ROADMAP.md          # Non-linear idea map for engine sub-modules, visual effects, physics & DX
 ```
 
