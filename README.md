@@ -34,24 +34,24 @@ f3engine/
 
 1. **Core Engine (`engine/`)**:
    - `ENGINE_VERSION` & `AppManifest` (`version.ts`) – Semantic engine versioning (`1.2.0`) and application manifest contract (`isEngineVersionCompatible`, `checkEngineVersion`). Every application built on `f3engine` supplies an `AppManifest` (`manifest.json`) declaring the engine version it targets.
-   - **Hierarchical Application Node Graph (`engine/nodes/`)**:
+   - **Hierarchical Application Node Graph (`engine/l2_runtime/nodes/`)**:
      - `Node<TProps, TState>` – Foundational tree node with typed `props` and `state`, lifecycle hooks (`HookPhase.BEFORE_UPDATE`, `AFTER_UPDATE`, `BEFORE_RENDER`, `AFTER_RENDER`), optional frame/tick processing, and cascading parent-over-child authority (`hide`, `show`, `enable`, `disable`, `freeze`, `unfreeze`, `resetState`, `unload`, `destroy`).
      - `CanvasNode` – Spatial 2D node on the virtual pixel grid (`VirtualRect`) with optional isolated offscreen surface caching (`useOwnSurface`).
      - `ContainerNode` & `ControlNode` – Layout orchestration, interactive pointer hit-testing (`hover` / `click`), focus states, and `modal` input barriers.
-     - `AppRootNode` & `NodeTreeProcessor` – Connects the node tree to `VirtualViewport`, `VirtualUIDecorator`, and `InputRouter`.
-   - **Normalized Input Router (`engine/input/`)**:
+     - `AppRootNode` & `NodeTreeProcessor` – Connects the node tree to `EngineKernel`, `VirtualViewport`, `VirtualUIDecorator`, and `InputRouter`.
+   - **Normalized Input Router (`engine/l2_runtime/input/`)**:
      - Aggregates Keyboard, `GamepadManager`, `VirtualViewport` pointer events, and synthetic on-screen controls (`DPadControl`) into normalized `ControlEvent` instances (`DIRECTION`, `ACTION`, `POINTER`, `GAMEPAD_STATUS`, `RAW_KEY`) dispatched top-down through the node tree with `event.consume()` and automatic modal barrier isolation.
-   - **Namespaced Out-of-the-Box UI Kit (`UIKit.ClassicV1` in `engine/ui/classic_v1/`)**:
+   - **Namespaced Out-of-the-Box UI Kit (`UIKit.ClassicV1` in `engine/l3_interaction/ui/classic_v1/`)**:
      - Provides composable atomic and higher-level composite controls (`ResponsiveAppShellNode`, `HeaderBarControl`, `ScoreCardGroupControl`, `ControlDeckControl`, `DPadControl`, `ModalDialogNode` with cascading `openSubDialog`, `SettingsDialogNode`, `ReadyPromptDialogNode`, `MenuListControl`, `MenuChoiceItemControl`, `MenuActionItemControl`, `ButtonControl`, `BadgeControl`, `ScoreCardControl`, `PanelControl`).
    - `VirtualViewport`, `ColorPalette`, `VirtualFramebuffer`, `IRendererBackend` (`Canvas2DRendererBackend` / `WebGLRendererBackend`), `VirtualFont`, `VirtualFontCompiler`, `StorageStore<T>`, `I18nManager`, `VideoFilterManager`.
 
 2. **Decoupled Debug Bar (`degub_bar/`)**:
    - Renders an HTML inspector bar that binds to the engine solely through `EngineDebugHooks`.
-   - Displays live **Engine Version vs. App Manifest Engine Version** compatibility status (`Engine v1.2.0 vs Manifest v1.2.0 (OK)`), and allows live inspection and overrides of grid aspect ratio, virtual resolution (`240w`, `300w`, `360w`, `480w`, or custom `W×H`), window scale percentage, UI/font scale multiplier, active renderer backend (`Canvas 2D` / `WebGL`), palette swatches, and virtual cursor `(X, Y)` coordinates.
+   - Displays live **Engine Version vs. App Manifest Engine Version** compatibility status (`Engine v1.2.0 vs Manifest v1.2.0 (OK)`), live runtime renderer context (`CTX: CanvasRenderingContext2D` / `WebGLRenderingContext`), and allows live inspection and overrides of grid aspect ratio, virtual resolution (`240w`, `300w`, `360w`, `480w`, or custom `W×H`), window scale percentage, UI/font scale multiplier, active renderer backend (`Canvas 2D` / `WebGL`), palette swatches, and virtual cursor `(X, Y)` coordinates.
 
 3. **HTML5 Demo Launcher (`demos/html5_launcher/`)**:
    - Initializes the host stage, mounts the selected demo from `DEMO_CATALOG`, and connects `DebugToolbar`.
-   - Supports live demo switching (`Snake (Classic)` ↔ `Snake 2: Arena`) and full engine reset (`Reload`) directly from the top bar.
+   - Supports live demo switching (`Snake (Classic)` ↔ `Layer Stack: Realtime Z-Index`) and full engine reset (`Reload`) directly from the top bar.
 
 ---
 
@@ -86,4 +86,4 @@ f3engine/
 
 ## License
 
-Released under the [MIT License](./LICENSE). Built-in retro PC bitmap font adaptations in `engine/fonts/` and `demos/games/snake2/fonts/` derive from *The Ultimate Oldschool PC Font Pack v2.2* by VileR ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)).
+Released under the [MIT License](./LICENSE). Built-in retro PC bitmap font adaptations in `engine/l1_infrastructure/fonts/` derive from *The Ultimate Oldschool PC Font Pack v2.2* by VileR ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)).
