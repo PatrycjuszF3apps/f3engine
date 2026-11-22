@@ -61,6 +61,32 @@ This document serves as an **open, non-chronological Idea Map** for **f3engine**
 
 A core architectural principle of **f3engine** is leveraging `Node` **inheritance and containerization** not only for UI menus/dialogs, but directly inside the **gameplay rendering pipeline**, while maintaining a strict boundary against over-engineering with nodes.
 
+### [Idea] DDD 4-Layer Lifecycle Architecture, Per-Layer DI & Shadow Service Registrars (`*.registrar.ts`)
+- **Goal**: Structure `engine/` and every standalone application (`demos/games/<app-id>/`) around a strictly separated, Domain-Driven Design (DDD) 4-layer lifecycle architecture where every engine feature and application extension is implemented as a replaceable, interface-driven injected service bound to an explicit abstraction layer and frame lifecycle phase slot.
+- **Core Architectural Guardrails & Requirements**:
+  1. **Four Strictly Isolated Lifecycle Abstraction Layers & Mirrored Directory Topology**:
+     - Both `engine/` and standalone applications (`demos/games/<app-id>/`) enforce an identical layer directory structure reflecting the abstraction lifecycle of a frame:
+       - **`l1_infrastructure/` (Hardware, Platform & Physical Primitives)**: Browser DOM, raw device drivers (`IPointerDeviceDriver`, `IKeyboardDeviceDriver`, `IGamepadDeviceDriver`), indexed pixel buffers (`Uint8Array`), renderer backends (`Canvas2D`, `WebGL`), post-processing video filters (`CRT`, `Old Nokia`), frame clock (`requestAnimationFrame`), and storage drivers. Completely blind to `Node` trees, UI controls, `zIndex`, and game rules.
+       - **`l2_runtime/` (Scene Graph & Execution Pipeline Kernel)**: `Node` hierarchy, external node metadata storage (`INodeMetadataService` backed by `WeakMap`), mathematical child ordering strategies (`IChildOrderService`), geometric hit-testing (`IHitTestService`), and hardware-agnostic tree signal broadcasting (`ITreeSignalBroadcaster`). Completely blind to physical input hardware (`MouseEvent` vs. `TouchEvent` vs. `Gamepad`) and game universe semantics.
+       - **`l3_interaction/` (Cross-Cutting Spatial, Layering & UI Interaction Mechanics)**: Device-agnostic interaction and spatial composition services (`ILayerElevationService`, `IFocusNavigationService`, `IDragAndDropService`, modal barriers, layout controllers, and versioned `UIKit` controls) operating exclusively on normalized tree signals and runtime ports.
+       - **`l4_domain/` (Application & Game Universe Logic)**: Reusable 2D world policies in `engine/l4_domain/` and concrete application/game universe logic in `demos/games/<app-id>/l4_domain/` (e.g., world depth/elevation rules, autonomous layer animations, entity simulation, and scoring) expressed strictly in the ubiquitous language of the domain.
+  2. **Per-Layer Service Registries & Inter-Layer Boundary Ports**:
+     - Each abstraction level owns an isolated, strongly-typed service container (`LayerServiceRegistry<'L1' | 'L2' | 'L3' | 'L4'>`) that prevents cross-layer service mixing at compile time.
+     - Layers communicate exclusively with adjacent levels via explicit boundary port contracts and immutable DTOs expressed in each layer's ubiquitous language.
+  3. **Pure Services + Shadow Service Registrar Classes (`*.registrar.ts`) & Pipeline Phase Slots**:
+     - Every service class is a pure TypeScript class (POPO) that receives its layer-local interface dependencies strictly via constructor injection and holds zero references to the DI container.
+     - Every service is paired with a **Shadow Registrar Class** (`*ServiceRegistrar` in `*.registrar.ts`) that has access exclusively to its own layer's registration context (`L1RegistrationContext`..`L4RegistrationContext`) and declaratively defines:
+       - `provides`: The layer-scoped `ServiceToken<TContract, TLayer>` fulfilled by the service.
+       - `inject`: Required interface tokens autowired by the layer container into `createInstance(...)`.
+       - `shouldRegister(ctx)`: Conditional registration predicate allowing applications to selectively override or extend engine services while engine defaults register automatically as fallbacks.
+       - `getPipelineSlots()`: Declarative frame-phase slot bindings (`phase`, `priority`, and `execute(service, frameContext)` carrying `frameId`, `phaseId`, and `dt`) so the layer pipeline orchestrator executes services automatically at the exact lifecycle stage.
+  4. **Multi-Layer Service Collaboration (Real-Time Child Ordering & Input Abstraction)**:
+     - Capabilities such as real-time `children` Z-ordering or device-agnostic input decompose cleanly across layers: `L4` computes domain-level depth/priority in the application universe, `L3` manages group/layer elevation rules, and `L2` maintains external node order metadata (`INodeMetadataService`) and executes stable sorting (`IChildOrderService`) for both back-to-front rendering and front-to-back hit-testing.
+  5. **Reference Applications Built on the 4-Layer Standard**:
+     - Provide two clean reference applications under `demos/games/`:
+       - **Snake (`demos/games/snake/`)**: Classic grid arcade game organized into `l1_infrastructure/`..`l4_domain/` with service registrars.
+       - **Multi-Layer Node Compositor (`demos/games/layers/`)**: Dedicated showcase rendering multiple independent, simultaneously animated background/foreground `CanvasNode` layers grouped inside a container node with real-time `zIndex` sorting injected via custom application services.
+
 ### 3.1. Transparent Multi-Sub-Engine Stage Composition
 - A game field/stage (`GameStageNode extends CanvasNode`) acts as a **container** that mounts independent rendering sub-modules as child `CanvasNode` layers rendered in deterministic `zIndex` order onto the shared `IVirtualSurface`:
   ```text
