@@ -248,24 +248,61 @@ export class AnimatedBackdropNode extends ControlNode<AnimatedBackdropNodeProps>
     t: number,
     pixelated: boolean
   ): void {
-    // Subtle checkerboard pattern inside prism backdrop
-    surface.fillCheckerRect(
-      rect.x,
-      rect.y,
-      rect.width,
-      rect.height,
-      'panelAlt',
-      6
-    );
+    // Subtle retro grid inside prism backdrop
+    for (let gx = rect.x + 8; gx < rect.x + rect.width - 2; gx += 12) {
+      surface.drawLine(gx, rect.y, gx, rect.y + rect.height - 1, 'panelBg');
+    }
+    for (let gy = rect.y + 8; gy < rect.y + rect.height - 2; gy += 12) {
+      surface.drawLine(rect.x, gy, rect.x + rect.width - 1, gy, 'panelBg');
+    }
+
+    const centers: Array<{ x: number; y: number }> = [];
     for (let i = 0; i < 4; i++) {
       const size = 8 + (i % 2) * 4;
-      const maxW = Math.max(1, rect.width - size - 4);
-      const maxH = Math.max(1, rect.height - size - 4);
-      const normX = 0.5 + 0.45 * Math.sin(t * (1.1 + i * 0.25) + i * 1.7);
-      const normY = 0.5 + 0.45 * Math.cos(t * (1.3 + i * 0.2) + i * 2.1);
-      const px = rect.x + 2 + Math.round(normX * maxW);
-      const py = rect.y + 2 + Math.round(normY * maxH);
+      const maxW = Math.max(1, rect.width - size - 6);
+      const maxH = Math.max(1, rect.height - size - 6);
+      const normX = 0.5 + 0.44 * Math.sin(t * (1.1 + i * 0.25) + i * 1.7);
+      const normY = 0.5 + 0.44 * Math.cos(t * (1.3 + i * 0.2) + i * 2.1);
+      const px = rect.x + 3 + Math.round(normX * maxW);
+      const py = rect.y + 3 + Math.round(normY * maxH);
+      centers.push({
+        x: px + Math.floor(size / 2),
+        y: py + Math.floor(size / 2),
+      });
+    }
 
+    // Connect vertices into a dynamic rotating retro wireframe polygon
+    for (let i = 0; i < centers.length; i++) {
+      const a = centers[i];
+      const b = centers[(i + 1) % centers.length];
+      surface.drawLine(
+        a.x,
+        a.y,
+        b.x,
+        b.y,
+        pixelated ? 'textMain' : 'targetFill'
+      );
+    }
+    surface.drawLine(
+      centers[0].x,
+      centers[0].y,
+      centers[2].x,
+      centers[2].y,
+      pixelated ? 'border' : 'primaryEntityHead'
+    );
+    surface.drawLine(
+      centers[1].x,
+      centers[1].y,
+      centers[3].x,
+      centers[3].y,
+      pixelated ? 'border' : 'primaryEntityHead'
+    );
+
+    // Draw prism vertex blocks on top of wireframe lines
+    for (let i = 0; i < centers.length; i++) {
+      const size = 8 + (i % 2) * 4;
+      const px = centers[i].x - Math.floor(size / 2);
+      const py = centers[i].y - Math.floor(size / 2);
       const fillToken: PaletteColorToken =
         i % 2 === 0 ? 'targetFill' : 'primaryEntityHead';
       surface.fillRect(px, py, size, size, fillToken);

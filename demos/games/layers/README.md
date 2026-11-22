@@ -6,7 +6,7 @@
 
 | **Portrait CRT Filter (WebGL)** | **16:9 Horizontal Responsive Layout** |
 | :---: | :---: |
-| ![Layer Stack CRT WebGL](../../../docs/screenshots/layers-zstack-crt.png) | ![Layer Stack 16:9 Horizontal](../../../docs/screenshots/layers-zstack-horizontal.png) |
+| ![Layer Stack CRT WebGL](../../../docs/screenshots/layers-zstack-crt.png) | ![Layer Stack 16:9 Horizontal](../../../docs/screenshots/layers-zstack-horizontal.jpg) |
 
 ---
 
